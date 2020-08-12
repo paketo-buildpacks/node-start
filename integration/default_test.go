@@ -60,10 +60,10 @@ func testDefault(t *testing.T, context spec.G, it spec.S) {
 			image, logs, err = pack.Build.
 				WithNoPull().
 				WithBuildpacks(
-					buildpack,
 					nodeEngineBuildpack,
+					buildpack,
 				).
-                Execute(name, source)
+				Execute(name, source)
 			Expect(err).ToNot(HaveOccurred(), logs.String)
 
 			container, err = docker.Container.Run.Execute(image.ID)
@@ -82,7 +82,7 @@ func testDefault(t *testing.T, context spec.G, it spec.S) {
 			Expect(logs).To(ContainLines(
 				MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, buildpackInfo.Buildpack.Name)),
 				"  Writing start command",
-                `    node server.js`,
+				`    node server.js`,
 			))
 		})
 	})

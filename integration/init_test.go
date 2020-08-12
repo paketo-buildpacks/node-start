@@ -16,14 +16,14 @@ import (
 )
 
 var (
-    buildpack string
-    nodeEngineBuildpack string
-	buildpackInfo struct {
-	    Buildpack struct {
-		    ID   string
-		    Name string
-        }
-    }
+	buildpack           string
+	nodeEngineBuildpack string
+	buildpackInfo       struct {
+		Buildpack struct {
+			ID   string
+			Name string
+		}
+	}
 	Config struct {
 		NodeEngine string `json:"node-engine"`
 	}

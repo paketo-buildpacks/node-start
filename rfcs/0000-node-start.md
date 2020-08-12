@@ -2,7 +2,7 @@
 
 ## Proposal
 
-Create a buildpack that will require `node` to be in the built image and that will write a start command.
+Create a buildpack that will require `node` to be in the app image and that will write a start command.
 
 ## Motivation
 

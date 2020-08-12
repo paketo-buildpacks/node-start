@@ -21,5 +21,3 @@ During the build, the buildpack will write the start command `node server.js`. `
 ## Unresolved Questions
 
 Should we support a user's ability to specify an app filename other than `server.js` in our initial implementation?
-
-{{REMOVE THIS SECTION BEFORE RATIFICATION!}}

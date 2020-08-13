@@ -1,12 +1,14 @@
 package nodestart_test
 
 import (
+	"bytes"
 	"io/ioutil"
 	"os"
 	"testing"
 
 	nodestart "github.com/paketo-buildpacks/node-start"
 	"github.com/paketo-buildpacks/packit"
+	"github.com/paketo-buildpacks/packit/scribe"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"
@@ -19,6 +21,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		layersDir  string
 		workingDir string
 		cnbDir     string
+		buffer     *bytes.Buffer
 
 		build packit.BuildFunc
 	)
@@ -34,7 +37,9 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		workingDir, err = ioutil.TempDir("", "working-dir")
 		Expect(err).NotTo(HaveOccurred())
 
-		build = nodestart.Build()
+		buffer = bytes.NewBuffer(nil)
+		logger := scribe.NewLogger(buffer)
+		build = nodestart.Build(logger)
 	})
 
 	it.After(func() {
@@ -43,7 +48,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		Expect(os.RemoveAll(workingDir)).To(Succeed())
 	})
 
-	it("returns a result that builds correctly", func() {
+	it("returns a result that provides a node start command", func() {
 		result, err := build(packit.BuildContext{
 			WorkingDir: workingDir,
 			CNBPath:    cnbDir,
@@ -64,7 +69,16 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 				Entries: nil,
 			},
 			Layers: nil,
+			Processes: []packit.Process{
+				{
+					Type:    "web",
+					Command: "node server.js",
+				},
+			},
 		}))
 
+		Expect(buffer.String()).To(ContainSubstring("Some Buildpack some-version"))
+		Expect(buffer.String()).To(ContainSubstring("Assigning launch processes"))
+		Expect(buffer.String()).To(ContainSubstring("node server.js"))
 	})
 }

@@ -1,7 +1,7 @@
 # Node Start Cloud Native Buildpack
 ## `gcr.io/paketo-buildpacks/node-start`
 
-The Node Start CNB sets the start command for a given node application.
+The Paketo Node Start CNB sets the start command for a given node application.
 
 ## Integration
 

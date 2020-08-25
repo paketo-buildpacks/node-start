@@ -3,6 +3,7 @@ api = "0.2"
 [buildpack]
   id = "paketo-buildpacks/node-start"
   name = "Paketo Node Start Buildpack"
+  homepage = "https://github.com/paketo-buildpacks/node-start"
 
 [[stacks]]
   id = "io.buildpacks.stacks.bionic"

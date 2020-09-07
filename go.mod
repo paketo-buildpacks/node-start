@@ -7,7 +7,7 @@ require (
 	github.com/MasterMinds/semver v1.5.0 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/cloudfoundry/packit v0.0.5
-	github.com/onsi/gomega v1.10.1
+	github.com/onsi/gomega v1.10.2
 	github.com/paketo-buildpacks/occam v0.0.18
 	github.com/paketo-buildpacks/packit v0.2.7
 	github.com/sclevine/spec v1.4.0

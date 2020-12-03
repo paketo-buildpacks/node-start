@@ -11,5 +11,6 @@ func TestUnitNodeStart(t *testing.T) {
 	suite := spec.New("node-start", spec.Report(report.Terminal{}), spec.Parallel())
 	suite("Build", testBuild)
 	suite("Detect", testDetect)
+	suite("NodeApplicationDetector", testNodeApplicationDetector)
 	suite.Run(t)
 }

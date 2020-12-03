@@ -1,20 +1,21 @@
 package nodestart
 
 import (
-	"fmt"
 	"github.com/paketo-buildpacks/packit"
-	"path/filepath"
 )
 
-func Detect() packit.DetectFunc {
+//go:generate faux --interface ApplicationDetector --output fakes/application_detector.go
+type ApplicationDetector interface {
+	Detect(workingDir string) (string, error)
+}
+
+func Detect(applicationDetector ApplicationDetector) packit.DetectFunc {
 	return func(context packit.DetectContext) (packit.DetectResult, error) {
-		files, err := filepath.Glob(filepath.Join(context.WorkingDir, "*.js"))
+		_, err := applicationDetector.Detect(context.WorkingDir)
 		if err != nil {
-			return packit.DetectResult{}, fmt.Errorf("file glob function failed: %w", err)
+			return packit.DetectResult{}, err
 		}
-		if len(files) == 0 {
-			return packit.DetectResult{}, packit.Fail
-		}
+
 		return packit.DetectResult{
 			Plan: packit.BuildPlan{
 				Provides: []packit.BuildPlanProvision{},

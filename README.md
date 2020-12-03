@@ -49,3 +49,13 @@ and thus it ignores any signal with the default action. As a result, the
 process will not terminate on `SIGINT` or `SIGTERM` unless it is coded to do
 so. You can also use docker's `--init` flag to wrap your node process with an
 init system that will properly handle signals.
+
+## Application Detection
+This buildpack searches your application root for the following files:
+1. `server.js`
+1. `app.js`
+1. `main.js`
+1. `index.js`
+If you have multiple of the above files in you application root then the
+highest priority file (`server.js > app.js > main.js > index.js`) will be
+choosen for the start command.

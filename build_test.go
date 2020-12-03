@@ -2,11 +2,13 @@ package nodestart_test
 
 import (
 	"bytes"
+	"errors"
 	"io/ioutil"
 	"os"
 	"testing"
 
 	nodestart "github.com/paketo-buildpacks/node-start"
+	"github.com/paketo-buildpacks/node-start/fakes"
 	"github.com/paketo-buildpacks/packit"
 	"github.com/paketo-buildpacks/packit/scribe"
 	"github.com/sclevine/spec"
@@ -23,6 +25,8 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		cnbDir     string
 		buffer     *bytes.Buffer
 
+		applicationDetector *fakes.ApplicationDetector
+
 		build packit.BuildFunc
 	)
 
@@ -37,9 +41,12 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		workingDir, err = ioutil.TempDir("", "working-dir")
 		Expect(err).NotTo(HaveOccurred())
 
+		applicationDetector = &fakes.ApplicationDetector{}
+		applicationDetector.DetectCall.Returns.String = "server.js"
+
 		buffer = bytes.NewBuffer(nil)
 		logger := scribe.NewLogger(buffer)
-		build = nodestart.Build(logger)
+		build = nodestart.Build(applicationDetector, logger)
 	})
 
 	it.After(func() {
@@ -77,8 +84,35 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			},
 		}))
 
+		Expect(applicationDetector.DetectCall.Receives.WorkingDir).To(Equal(workingDir))
+
 		Expect(buffer.String()).To(ContainSubstring("Some Buildpack some-version"))
 		Expect(buffer.String()).To(ContainSubstring("Assigning launch processes"))
 		Expect(buffer.String()).To(ContainSubstring("node server.js"))
+	})
+
+	context("failure cases", func() {
+		context("when the application detection fails", func() {
+			it.Before(func() {
+				applicationDetector.DetectCall.Returns.Error = errors.New("failed application detection")
+
+			})
+			it("returns an error", func() {
+				_, err := build(packit.BuildContext{
+					WorkingDir: workingDir,
+					CNBPath:    cnbDir,
+					Stack:      "some-stack",
+					BuildpackInfo: packit.BuildpackInfo{
+						Name:    "Some Buildpack",
+						Version: "some-version",
+					},
+					Plan: packit.BuildpackPlan{
+						Entries: []packit.BuildpackPlanEntry{},
+					},
+					Layers: packit.Layers{Path: layersDir},
+				})
+				Expect(err).To(MatchError("failed application detection"))
+			})
+		})
 	})
 }

@@ -22,10 +22,12 @@ func Build(applicationDetector ApplicationDetector, logger scribe.Logger) packit
 		logger.Subprocess("web: %s", command)
 
 		return packit.BuildResult{
-			Processes: []packit.Process{
-				{
-					Type:    "web",
-					Command: command,
+			Launch: packit.LaunchMetadata{
+				Processes: []packit.Process{
+					{
+						Type:    "web",
+						Command: command,
+					},
 				},
 			},
 		}, nil

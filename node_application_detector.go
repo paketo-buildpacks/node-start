@@ -16,6 +16,19 @@ func NewNodeApplicationDetector() NodeApplicationDetector {
 }
 
 func (n NodeApplicationDetector) Detect(workingDir string) (string, error) {
+	if launchpoint, ok := os.LookupEnv("BP_LAUNCHPOINT"); ok {
+		launchpoint = filepath.Clean(launchpoint)
+		_, err := os.Stat(filepath.Join(workingDir, launchpoint))
+		if err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				return "", packit.Fail.WithMessage("expected value derived from BP_LAUNCHPOINT [%s] to be an existing file", filepath.Join(workingDir, launchpoint))
+			} else {
+				return "", err
+			}
+		}
+		return launchpoint, nil
+	}
+
 	files := []string{"server.js", "app.js", "main.js", "index.js"}
 	for _, file := range files {
 		_, err := os.Stat(filepath.Join(workingDir, file))

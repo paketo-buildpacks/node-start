@@ -25,22 +25,6 @@ can use to build your app as follows:
 pack build <app-name> -p <path-to-app> -b <path/to/node-engine.cnb> -b build/buildpackage.cnb
 ```
 
-## `buildpack.yml` Configurations
-
-There are no extra configurations for this buildpack based on `buildpack.yml`.
-
-## Run Tests
-
-To run all unit tests, run:
-```
-./scripts/unit.sh
-```
-
-To run all integration tests, run:
-```
-/scripts/integration.sh
-```
-
 ## Graceful shutdown and signal handling
 
 You can add signal handlers in your app to support graceful shutdown and
@@ -56,6 +40,27 @@ This buildpack searches your application root for the following files:
 1. `app.js`
 1. `main.js`
 1. `index.js`
-If you have multiple of the above files in you application root then the
+If you have multiple of the above files in your application root then the
 highest priority file (`server.js > app.js > main.js > index.js`) will be
-choosen for the start command.
+chosen for the start command.
+
+## BP_LAUNCHPOINT
+
+The BP_LAUNCHPOINT environment variable may be used to specify a file for the
+start command that is not included in the above set.
+
+e.g. If `BP_LAUNCHPOINT=./src/launchpoint.js`, the buildpack will verify that
+the file exists and then set the start command using that file `node
+src/launchpoint.js`
+
+## Run Tests
+
+To run all unit tests, run:
+```
+./scripts/unit.sh
+```
+
+To run all integration tests, run:
+```
+/scripts/integration.sh
+```

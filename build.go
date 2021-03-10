@@ -7,11 +7,11 @@ import (
 	"github.com/paketo-buildpacks/packit/scribe"
 )
 
-func Build(applicationDetector ApplicationDetector, logger scribe.Logger) packit.BuildFunc {
+func Build(applicationFinder ApplicationFinder, logger scribe.Logger) packit.BuildFunc {
 	return func(context packit.BuildContext) (packit.BuildResult, error) {
 		logger.Title("%s %s", context.BuildpackInfo.Name, context.BuildpackInfo.Version)
 
-		file, err := applicationDetector.Detect(context.WorkingDir)
+		file, err := applicationFinder.Find(context.WorkingDir)
 		if err != nil {
 			return packit.BuildResult{}, err
 		}

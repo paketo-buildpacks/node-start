@@ -10,9 +10,9 @@ import (
 
 func main() {
 	logger := scribe.NewLogger(os.Stdout)
-	nodeApplicationDetector := nodestart.NewNodeApplicationDetector()
+	nodeApplicationFinder := nodestart.NewNodeApplicationFinder()
 	packit.Run(
-		nodestart.Detect(nodeApplicationDetector),
-		nodestart.Build(nodeApplicationDetector, logger),
+		nodestart.Detect(nodeApplicationFinder),
+		nodestart.Build(nodeApplicationFinder, logger),
 	)
 }

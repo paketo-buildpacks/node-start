@@ -25,7 +25,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		cnbDir     string
 		buffer     *bytes.Buffer
 
-		applicationDetector *fakes.ApplicationDetector
+		applicationFinder *fakes.ApplicationFinder
 
 		build packit.BuildFunc
 	)
@@ -41,12 +41,12 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		workingDir, err = ioutil.TempDir("", "working-dir")
 		Expect(err).NotTo(HaveOccurred())
 
-		applicationDetector = &fakes.ApplicationDetector{}
-		applicationDetector.DetectCall.Returns.String = "server.js"
+		applicationFinder = &fakes.ApplicationFinder{}
+		applicationFinder.FindCall.Returns.String = "server.js"
 
 		buffer = bytes.NewBuffer(nil)
 		logger := scribe.NewLogger(buffer)
-		build = nodestart.Build(applicationDetector, logger)
+		build = nodestart.Build(applicationFinder, logger)
 	})
 
 	it.After(func() {
@@ -86,7 +86,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			},
 		}))
 
-		Expect(applicationDetector.DetectCall.Receives.WorkingDir).To(Equal(workingDir))
+		Expect(applicationFinder.FindCall.Receives.WorkingDir).To(Equal(workingDir))
 
 		Expect(buffer.String()).To(ContainSubstring("Some Buildpack some-version"))
 		Expect(buffer.String()).To(ContainSubstring("Assigning launch processes"))
@@ -94,9 +94,9 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 	})
 
 	context("failure cases", func() {
-		context("when the application detection fails", func() {
+		context("when the application finding fails", func() {
 			it.Before(func() {
-				applicationDetector.DetectCall.Returns.Error = errors.New("failed application detection")
+				applicationFinder.FindCall.Returns.Error = errors.New("failed to find application")
 
 			})
 			it("returns an error", func() {
@@ -113,7 +113,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 					},
 					Layers: packit.Layers{Path: layersDir},
 				})
-				Expect(err).To(MatchError("failed application detection"))
+				Expect(err).To(MatchError("failed to find application"))
 			})
 		})
 	})

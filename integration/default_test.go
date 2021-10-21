@@ -89,5 +89,58 @@ func testDefault(t *testing.T, context spec.G, it spec.S) {
 				`    web: node server.js`,
 			))
 		})
+		context("when BP_LIVE_RELOAD_ENABLED=true", func() {
+			var noReloadContainer occam.Container
+
+			it.After(func() {
+				Expect(docker.Container.Remove.Execute(noReloadContainer.ID)).To(Succeed())
+			})
+
+			it("adds a reloadable process type as the default process", func() {
+				var err error
+				source, err = occam.Source(filepath.Join("testdata", "default"))
+				Expect(err).NotTo(HaveOccurred())
+
+				var logs fmt.Stringer
+				image, logs, err = pack.Build.
+					WithPullPolicy("never").
+					WithBuildpacks(
+						nodeEngineBuildpack,
+						watchexecBuildpack,
+						buildpack,
+					).
+					WithEnv(map[string]string{
+						"BP_LIVE_RELOAD_ENABLED": "true",
+					}).
+					Execute(name, source)
+				Expect(err).ToNot(HaveOccurred(), logs.String)
+
+				container, err = docker.Container.Run.
+					WithEnv(map[string]string{"PORT": "8080"}).
+					WithPublish("8080").
+					WithPublishAll().
+					Execute(image.ID)
+				Expect(err).NotTo(HaveOccurred())
+
+				Eventually(container).Should(Serve(ContainSubstring("hello world")).OnPort(8080))
+
+				noReloadContainer, err = docker.Container.Run.
+					WithEnv(map[string]string{"PORT": "8080"}).
+					WithPublish("8080").
+					WithPublishAll().
+					WithEntrypoint("no-reload").
+					Execute(image.ID)
+				Expect(err).NotTo(HaveOccurred())
+
+				Eventually(noReloadContainer).Should(Serve(ContainSubstring("hello world")).OnPort(8080))
+
+				Expect(logs).To(ContainLines(
+					MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, buildpackInfo.Buildpack.Name)),
+					"  Assigning launch processes",
+					`    web: watchexec --restart --watch /workspace "node server.js"`,
+					`    no-reload: node server.js`,
+				))
+			})
+		})
 	})
 }

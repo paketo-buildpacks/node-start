@@ -18,17 +18,40 @@ func Build(applicationFinder ApplicationFinder, logger scribe.Logger) packit.Bui
 
 		command := fmt.Sprintf("node %s", file)
 
+		processes := []packit.Process{
+			{
+				Type:    "web",
+				Command: command,
+			},
+		}
+
+		shouldReload, err := checkLiveReloadEnabled()
+		if err != nil {
+			return packit.BuildResult{}, err
+		}
+
+		if shouldReload {
+			processes = []packit.Process{
+				{
+					Type:    "web",
+					Command: fmt.Sprintf(`watchexec --restart --watch /workspace "%s"`, command),
+				},
+				{
+					Type:    "no-reload",
+					Command: command,
+				},
+			}
+		}
+
 		logger.Process("Assigning launch processes")
-		logger.Subprocess("web: %s", command)
+
+		for _, process := range processes {
+			logger.Subprocess("%s: %s", process.Type, process.Command)
+		}
 
 		return packit.BuildResult{
 			Launch: packit.LaunchMetadata{
-				Processes: []packit.Process{
-					{
-						Type:    "web",
-						Command: command,
-					},
-				},
+				Processes: processes,
 			},
 		}, nil
 	}

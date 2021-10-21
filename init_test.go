@@ -8,7 +8,7 @@ import (
 )
 
 func TestUnitNodeStart(t *testing.T) {
-	suite := spec.New("node-start", spec.Report(report.Terminal{}), spec.Parallel())
+	suite := spec.New("node-start", spec.Report(report.Terminal{}), spec.Sequential())
 	suite("Build", testBuild)
 	suite("Detect", testDetect)
 	suite("ApplicationFinder", testNodeApplicationFinder)

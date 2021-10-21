@@ -1,3 +1,4 @@
 {
-  "node-engine": "github.com/paketo-buildpacks/node-engine"
+  "node-engine": "github.com/paketo-buildpacks/node-engine",
+  "watchexec": "github.com/paketo-buildpacks/watchexec"
 }

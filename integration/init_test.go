@@ -18,6 +18,7 @@ import (
 var (
 	buildpack           string
 	nodeEngineBuildpack string
+	watchexecBuildpack  string
 	buildpackInfo       struct {
 		Buildpack struct {
 			ID   string
@@ -26,6 +27,7 @@ var (
 	}
 	Config struct {
 		NodeEngine string `json:"node-engine"`
+		Watchexec  string `json:"watchexec"`
 	}
 )
 
@@ -57,6 +59,10 @@ func TestIntegration(t *testing.T) {
 
 	nodeEngineBuildpack, err = buildpackStore.Get.
 		Execute(Config.NodeEngine)
+	Expect(err).ToNot(HaveOccurred())
+
+	watchexecBuildpack, err = buildpackStore.Get.
+		Execute(Config.Watchexec)
 	Expect(err).ToNot(HaveOccurred())
 
 	SetDefaultEventuallyTimeout(10 * time.Second)

@@ -62,6 +62,15 @@ e.g. If `BP_LAUNCHPOINT=./src/launchpoint.js`, the buildpack will verify that
 the file exists and then set the start command using that file `node
 src/launchpoint.js`
 
+## Enabling reloadable process types
+
+You can configure this buildpack to wrap the entrypoint process of your app
+such that it kills and restarts the process whenever files in the app's working
+directory in the container change. With this feature enabled, copying new
+verisons of source code into the running container will trigger your app's
+process to restart. Set the environment variable `BP_LIVE_RELOAD_ENABLED=true`
+at build time to enable this feature.
+
 ## Run Tests
 
 To run all unit tests, run:

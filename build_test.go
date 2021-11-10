@@ -81,6 +81,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 					{
 						Type:    "web",
 						Command: "node server.js",
+						Default: true,
 					},
 				},
 			},
@@ -122,6 +123,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 				{
 					Type:    "web",
 					Command: `watchexec --restart --watch /workspace "node server.js"`,
+					Default: true,
 				},
 				{
 					Type:    "no-reload",

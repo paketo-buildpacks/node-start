@@ -22,6 +22,7 @@ func Build(applicationFinder ApplicationFinder, logger scribe.Logger) packit.Bui
 			{
 				Type:    "web",
 				Command: command,
+				Default: true,
 			},
 		}
 
@@ -35,6 +36,7 @@ func Build(applicationFinder ApplicationFinder, logger scribe.Logger) packit.Bui
 				{
 					Type:    "web",
 					Command: fmt.Sprintf(`watchexec --restart --watch /workspace "%s"`, command),
+					Default: true,
 				},
 				{
 					Type:    "no-reload",

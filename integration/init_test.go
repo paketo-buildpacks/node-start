@@ -9,6 +9,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/paketo-buildpacks/occam"
+	"github.com/paketo-buildpacks/occam/packagers"
 	"github.com/sclevine/spec"
 	"github.com/sclevine/spec/report"
 
@@ -52,6 +53,8 @@ func TestIntegration(t *testing.T) {
 
 	buildpackStore := occam.NewBuildpackStore()
 
+	libpakBuildpackStore := occam.NewBuildpackStore().WithPackager(packagers.NewLibpak())
+
 	buildpack, err = buildpackStore.Get.
 		WithVersion("1.2.3").
 		Execute(root)
@@ -61,7 +64,7 @@ func TestIntegration(t *testing.T) {
 		Execute(Config.NodeEngine)
 	Expect(err).ToNot(HaveOccurred())
 
-	watchexecBuildpack, err = buildpackStore.Get.
+	watchexecBuildpack, err = libpakBuildpackStore.Get.
 		Execute(Config.Watchexec)
 	Expect(err).ToNot(HaveOccurred())
 

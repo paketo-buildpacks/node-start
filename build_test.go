@@ -9,8 +9,8 @@ import (
 
 	nodestart "github.com/paketo-buildpacks/node-start"
 	"github.com/paketo-buildpacks/node-start/fakes"
-	"github.com/paketo-buildpacks/packit"
-	"github.com/paketo-buildpacks/packit/scribe"
+	"github.com/paketo-buildpacks/packit/v2"
+	"github.com/paketo-buildpacks/packit/v2/scribe"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"

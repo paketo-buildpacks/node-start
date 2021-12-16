@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/paketo-buildpacks/packit"
+	"github.com/paketo-buildpacks/packit/v2"
 )
 
 //go:generate faux --interface ApplicationFinder --output fakes/application_finder.go

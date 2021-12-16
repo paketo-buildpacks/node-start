@@ -3,8 +3,8 @@ package nodestart
 import (
 	"fmt"
 
-	"github.com/paketo-buildpacks/packit"
-	"github.com/paketo-buildpacks/packit/scribe"
+	"github.com/paketo-buildpacks/packit/v2"
+	"github.com/paketo-buildpacks/packit/v2/scribe"
 )
 
 func Build(applicationFinder ApplicationFinder, logger scribe.Logger) packit.BuildFunc {

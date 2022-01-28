@@ -3,6 +3,7 @@ package nodestart_test
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -45,7 +46,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		applicationFinder.FindCall.Returns.String = "server.js"
 
 		buffer = bytes.NewBuffer(nil)
-		logger := scribe.NewLogger(buffer)
+		logger := scribe.NewEmitter(buffer)
 		build = nodestart.Build(applicationFinder, logger)
 	})
 
@@ -80,8 +81,10 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 				Processes: []packit.Process{
 					{
 						Type:    "web",
-						Command: "node server.js",
+						Command: "node",
+						Args:    []string{"server.js"},
 						Default: true,
+						Direct:  true,
 					},
 				},
 			},
@@ -122,18 +125,28 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			Expect(result.Launch.Processes).To(Equal([]packit.Process{
 				{
 					Type:    "web",
-					Command: `watchexec --restart --watch /workspace "node server.js"`,
+					Command: "watchexec",
+					Args: []string{
+						"--restart",
+						"--watch", workingDir,
+						"--shell", "none",
+						"--",
+						"node", "server.js",
+					},
 					Default: true,
+					Direct:  true,
 				},
 				{
 					Type:    "no-reload",
-					Command: "node server.js",
+					Command: "node",
+					Args:    []string{"server.js"},
+					Direct:  true,
 				},
 			}))
 
 			Expect(buffer.String()).To(ContainSubstring("Some Buildpack some-version"))
 			Expect(buffer.String()).To(ContainSubstring("Assigning launch processes"))
-			Expect(buffer.String()).To(ContainSubstring(`watchexec --restart --watch /workspace "node server.js"`))
+			Expect(buffer.String()).To(ContainSubstring(fmt.Sprintf(`watchexec --restart --watch %s --shell none -- node server.js`, workingDir)))
 			Expect(buffer.String()).To(ContainSubstring("node server.js"))
 		})
 	})

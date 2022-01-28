@@ -1,13 +1,11 @@
 package nodestart
 
 import (
-	"fmt"
-
 	"github.com/paketo-buildpacks/packit/v2"
 	"github.com/paketo-buildpacks/packit/v2/scribe"
 )
 
-func Build(applicationFinder ApplicationFinder, logger scribe.Logger) packit.BuildFunc {
+func Build(applicationFinder ApplicationFinder, logger scribe.Emitter) packit.BuildFunc {
 	return func(context packit.BuildContext) (packit.BuildResult, error) {
 		logger.Title("%s %s", context.BuildpackInfo.Name, context.BuildpackInfo.Version)
 
@@ -16,13 +14,16 @@ func Build(applicationFinder ApplicationFinder, logger scribe.Logger) packit.Bui
 			return packit.BuildResult{}, err
 		}
 
-		command := fmt.Sprintf("node %s", file)
+		command := "node"
+		args := []string{file}
 
 		processes := []packit.Process{
 			{
 				Type:    "web",
 				Command: command,
+				Args:    args,
 				Default: true,
+				Direct:  true,
 			},
 		}
 
@@ -35,21 +36,27 @@ func Build(applicationFinder ApplicationFinder, logger scribe.Logger) packit.Bui
 			processes = []packit.Process{
 				{
 					Type:    "web",
-					Command: fmt.Sprintf(`watchexec --restart --watch /workspace "%s"`, command),
+					Command: "watchexec",
+					Args: append([]string{
+						"--restart",
+						"--watch", context.WorkingDir,
+						"--shell", "none",
+						"--",
+						command,
+					}, args...),
+					Direct:  true,
 					Default: true,
 				},
 				{
 					Type:    "no-reload",
 					Command: command,
+					Args:    args,
+					Direct:  true,
 				},
 			}
 		}
 
-		logger.Process("Assigning launch processes")
-
-		for _, process := range processes {
-			logger.Subprocess("%s: %s", process.Type, process.Command)
-		}
+		logger.LaunchProcesses(processes)
 
 		return packit.BuildResult{
 			Launch: packit.LaunchMetadata{

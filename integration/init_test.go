@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/BurntSushi/toml"
+	"github.com/onsi/gomega/format"
 	"github.com/paketo-buildpacks/occam"
 	"github.com/paketo-buildpacks/occam/packagers"
 	"github.com/sclevine/spec"
@@ -33,6 +34,7 @@ var (
 )
 
 func TestIntegration(t *testing.T) {
+	format.MaxLength = 0
 	Expect := NewWithT(t).Expect
 
 	file, err := os.Open("../integration.json")

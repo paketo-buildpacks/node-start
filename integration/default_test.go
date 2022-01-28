@@ -85,10 +85,11 @@ func testDefault(t *testing.T, context spec.G, it spec.S) {
 
 			Expect(logs).To(ContainLines(
 				MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, buildpackInfo.Buildpack.Name)),
-				"  Assigning launch processes",
-				`    web: node server.js`,
+				"  Assigning launch processes:",
+				"    web (default): node server.js",
 			))
 		})
+
 		context("when BP_LIVE_RELOAD_ENABLED=true", func() {
 			var noReloadContainer occam.Container
 
@@ -136,9 +137,9 @@ func testDefault(t *testing.T, context spec.G, it spec.S) {
 
 				Expect(logs).To(ContainLines(
 					MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, buildpackInfo.Buildpack.Name)),
-					"  Assigning launch processes",
-					`    web: watchexec --restart --watch /workspace "node server.js"`,
-					`    no-reload: node server.js`,
+					"  Assigning launch processes:",
+					"    web (default): watchexec --restart --watch /workspace --shell none -- node server.js",
+					"    no-reload:     node server.js",
 				))
 			})
 		})

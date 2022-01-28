@@ -76,8 +76,8 @@ func testLaunchpoint(t *testing.T, context spec.G, it spec.S) {
 
 			Expect(logs).To(ContainLines(
 				MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, buildpackInfo.Buildpack.Name)),
-				"  Assigning launch processes",
-				`    web: node src/launchpoint.js`,
+				"  Assigning launch processes:",
+				"    web (default): node src/launchpoint.js",
 			))
 		})
 	})

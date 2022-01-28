@@ -9,10 +9,13 @@ import (
 )
 
 func main() {
-	logger := scribe.NewLogger(os.Stdout)
 	nodeApplicationFinder := nodestart.NewNodeApplicationFinder()
+
 	packit.Run(
 		nodestart.Detect(nodeApplicationFinder),
-		nodestart.Build(nodeApplicationFinder, logger),
+		nodestart.Build(
+			nodeApplicationFinder,
+			scribe.NewEmitter(os.Stdout),
+		),
 	)
 }

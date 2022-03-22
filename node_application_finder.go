@@ -2,8 +2,12 @@ package nodestart
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
+
+	"github.com/paketo-buildpacks/packit/v2"
 )
 
 type NodeApplicationFinder struct{}
@@ -12,22 +16,18 @@ func NewNodeApplicationFinder() NodeApplicationFinder {
 	return NodeApplicationFinder{}
 }
 
-func (n NodeApplicationFinder) Find(workingDir string) (string, error) {
-
-	launchpoint := os.Getenv("BP_LAUNCHPOINT")
+func (n NodeApplicationFinder) Find(workingDir, launchpoint, projectPath string) (string, error) {
 	if launchpoint != "" {
 		if _, err := os.Stat(filepath.Join(workingDir, launchpoint)); err != nil {
-			launchErr := launchpointError(launchpoint)
 			if errors.Is(err, os.ErrNotExist) {
-				return "", launchErr
-			} else {
-				return "", err
+				return "", fmt.Errorf("expected value derived from BP_LAUNCHPOINT [%s] to be an existing file", launchpoint)
 			}
+
+			return "", err
 		}
+
 		return filepath.Clean(launchpoint), nil
 	}
-
-	projectPath := os.Getenv("BP_NODE_PROJECT_PATH")
 
 	files := []string{"server.js", "app.js", "main.js", "index.js"}
 	for _, file := range files {
@@ -35,12 +35,13 @@ func (n NodeApplicationFinder) Find(workingDir string) (string, error) {
 		if err != nil {
 			if errors.Is(err, os.ErrNotExist) {
 				continue
-			} else {
-				return "", err
 			}
+
+			return "", err
 		}
+
 		return filepath.Join(projectPath, file), nil
 	}
-	targetError := targetFileError{expectedFiles: files, projectPath: filepath.Clean(projectPath)}
-	return "", targetError
+
+	return "", packit.Fail.WithMessage("could not find app in %s: expected one of %s", filepath.Clean(filepath.Join(workingDir, projectPath)), strings.Join(files, " | "))
 }

@@ -17,36 +17,49 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var (
-	buildpack           string
-	nodeEngineBuildpack string
-	watchexecBuildpack  string
-	buildpackInfo       struct {
-		Buildpack struct {
-			ID   string
-			Name string
+var settings struct {
+	Buildpacks struct {
+		NodeStart struct {
+			Online string
+		}
+		NodeEngine struct {
+			Online string
+		}
+		NPMInstall struct {
+			Online string
+		}
+		Watchexec struct {
+			Online string
 		}
 	}
+
+	Buildpack struct {
+		ID   string
+		Name string
+	}
+
 	Config struct {
 		NodeEngine string `json:"node-engine"`
+		NPMInstall string `json:"npm-install"`
 		Watchexec  string `json:"watchexec"`
 	}
-)
+}
 
 func TestIntegration(t *testing.T) {
 	format.MaxLength = 0
 	Expect := NewWithT(t).Expect
+	SetDefaultEventuallyTimeout(10 * time.Second)
 
 	file, err := os.Open("../integration.json")
 	Expect(err).NotTo(HaveOccurred())
 
-	Expect(json.NewDecoder(file).Decode(&Config)).To(Succeed())
+	Expect(json.NewDecoder(file).Decode(&settings.Config)).To(Succeed())
 	Expect(file.Close()).To(Succeed())
 
 	file, err = os.Open("../buildpack.toml")
 	Expect(err).NotTo(HaveOccurred())
 
-	_, err = toml.NewDecoder(file).Decode(&buildpackInfo)
+	_, err = toml.NewDecoder(file).Decode(&settings)
 	Expect(err).NotTo(HaveOccurred())
 	Expect(file.Close()).To(Succeed())
 
@@ -54,27 +67,29 @@ func TestIntegration(t *testing.T) {
 	Expect(err).ToNot(HaveOccurred())
 
 	buildpackStore := occam.NewBuildpackStore()
-
 	libpakBuildpackStore := occam.NewBuildpackStore().WithPackager(packagers.NewLibpak())
 
-	buildpack, err = buildpackStore.Get.
+	settings.Buildpacks.NodeStart.Online, err = buildpackStore.Get.
 		WithVersion("1.2.3").
 		Execute(root)
 	Expect(err).ToNot(HaveOccurred())
 
-	nodeEngineBuildpack, err = buildpackStore.Get.
-		Execute(Config.NodeEngine)
+	settings.Buildpacks.NodeEngine.Online, err = buildpackStore.Get.
+		Execute(settings.Config.NodeEngine)
 	Expect(err).ToNot(HaveOccurred())
 
-	watchexecBuildpack, err = libpakBuildpackStore.Get.
-		Execute(Config.Watchexec)
+	settings.Buildpacks.NPMInstall.Online, err = buildpackStore.Get.
+		Execute(settings.Config.NPMInstall)
 	Expect(err).ToNot(HaveOccurred())
 
-	SetDefaultEventuallyTimeout(10 * time.Second)
+	settings.Buildpacks.Watchexec.Online, err = libpakBuildpackStore.Get.
+		Execute(settings.Config.Watchexec)
+	Expect(err).ToNot(HaveOccurred())
 
 	suite := spec.New("Integration", spec.Report(report.Terminal{}), spec.Parallel())
 	suite("Default", testDefault)
 	suite("Launchpoint", testLaunchpoint)
 	suite("ProjectPath", testProjectPath)
+	suite("WithNodeModules", testNodeModules)
 	suite.Run(t)
 }

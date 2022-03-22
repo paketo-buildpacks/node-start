@@ -1,6 +1,8 @@
 package nodestart
 
 import (
+	"os"
+
 	"github.com/paketo-buildpacks/packit/v2"
 	"github.com/paketo-buildpacks/packit/v2/scribe"
 )
@@ -9,7 +11,7 @@ func Build(applicationFinder ApplicationFinder, logger scribe.Emitter) packit.Bu
 	return func(context packit.BuildContext) (packit.BuildResult, error) {
 		logger.Title("%s %s", context.BuildpackInfo.Name, context.BuildpackInfo.Version)
 
-		file, err := applicationFinder.Find(context.WorkingDir)
+		file, err := applicationFinder.Find(context.WorkingDir, os.Getenv("BP_LAUNCHPOINT"), os.Getenv("BP_NODE_PROJECT_PATH"))
 		if err != nil {
 			return packit.BuildResult{}, err
 		}

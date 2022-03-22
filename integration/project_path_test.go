@@ -58,8 +58,8 @@ func testProjectPath(t *testing.T, context spec.G, it spec.S) {
 			image, logs, err = pack.Build.
 				WithPullPolicy("never").
 				WithBuildpacks(
-					nodeEngineBuildpack,
-					buildpack,
+					settings.Buildpacks.NodeEngine.Online,
+					settings.Buildpacks.NodeStart.Online,
 				).
 				WithEnv(map[string]string{"BP_NODE_PROJECT_PATH": "./src"}).
 				Execute(name, source)
@@ -75,7 +75,7 @@ func testProjectPath(t *testing.T, context spec.G, it spec.S) {
 			Eventually(container).Should(Serve(ContainSubstring("hello world")).OnPort(8080))
 
 			Expect(logs).To(ContainLines(
-				MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, buildpackInfo.Buildpack.Name)),
+				MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.Buildpack.Name)),
 				"  Assigning launch processes:",
 				"    web (default): node src/server.js",
 			))

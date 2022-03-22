@@ -2,7 +2,6 @@ package nodestart_test
 
 import (
 	"errors"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -27,18 +26,26 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 
 	it.Before(func() {
 		var err error
-		applicationFinder = &fakes.ApplicationFinder{}
-		workingDir, err = ioutil.TempDir("", "working-dir")
+		workingDir, err = os.MkdirTemp("", "working-dir")
 		Expect(err).NotTo(HaveOccurred())
 
-		applicationFinder.FindCall.Returns.String = "server.js"
+		applicationFinder = &fakes.ApplicationFinder{}
+		applicationFinder.FindCall.Returns.String = "./src/server.js"
 
 		detect = nodestart.Detect(applicationFinder)
 	})
 
 	context("when an application is detected in the working dir", func() {
 		it.Before(func() {
-			Expect(ioutil.WriteFile(filepath.Join(workingDir, "server.js"), []byte(nil), 0644)).To(Succeed())
+			os.Setenv("BP_NODE_PROJECT_PATH", "./src")
+			os.Setenv("BP_LAUNCHPOINT", "./src/server.js")
+			Expect(os.MkdirAll(filepath.Join(workingDir, "src"), os.ModePerm)).To(Succeed())
+			Expect(os.WriteFile(filepath.Join(workingDir, "src", "server.js"), nil, 0600)).To(Succeed())
+		})
+
+		it.After(func() {
+			os.Unsetenv("BP_NODE_PROJECT_PATH")
+			os.Unsetenv("BP_LAUNCHPOINT")
 		})
 
 		it("detects", func() {
@@ -59,9 +66,11 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 			}))
 
 			Expect(applicationFinder.FindCall.Receives.WorkingDir).To(Equal(workingDir))
+			Expect(applicationFinder.FindCall.Receives.Launchpoint).To(Equal("./src/server.js"))
+			Expect(applicationFinder.FindCall.Receives.ProjectPath).To(Equal("./src"))
 		})
 
-		context("and BP_LIVE_RELOAD_ENABLED=true in the build environment", func() {
+		context("when BP_LIVE_RELOAD_ENABLED=true", func() {
 			it.Before(func() {
 				os.Setenv("BP_LIVE_RELOAD_ENABLED", "true")
 			})
@@ -88,49 +97,72 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 							"launch": true,
 						},
 					},
+				}))
+			})
+		})
+	}, spec.Sequential())
+
+	context("when a package.json is detected in the working dir", func() {
+		it.Before(func() {
+			os.Setenv("BP_NODE_PROJECT_PATH", "./src")
+			Expect(os.MkdirAll(filepath.Join(workingDir, "src"), os.ModePerm)).To(Succeed())
+			Expect(os.WriteFile(filepath.Join(workingDir, "src", "package.json"), nil, 0600)).To(Succeed())
+		})
+
+		it.After(func() {
+			os.Unsetenv("BP_NODE_PROJECT_PATH")
+		})
+
+		it("requires node_modules", func() {
+			result, err := detect(packit.DetectContext{
+				WorkingDir: workingDir,
+			})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result.Plan.Requires).To(Equal([]packit.BuildPlanRequirement{
+				{
+					Name: "node",
+					Metadata: map[string]interface{}{
+						"launch": true,
+					},
 				},
-				))
-			})
+				{
+					Name: "node_modules",
+					Metadata: map[string]interface{}{
+						"launch": true,
+					},
+				},
+			}))
 		})
-	})
-
-	context("when BP_LAUNCHPOINT file does not exist", func() {
-		it.Before(func() {
-			applicationFinder.FindCall.Returns.Error = nodestart.NewLaunchpointError("launchpoint")
-		})
-		it("fails detection", func() {
-			_, err := detect(packit.DetectContext{
-				WorkingDir: workingDir,
-			})
-			Expect(err).To(Equal(packit.Fail.WithMessage("expected value derived from BP_LAUNCHPOINT [launchpoint] to be an existing file")))
-			Expect(applicationFinder.FindCall.Receives.WorkingDir).To(Equal(workingDir))
-		})
-	})
-
-	context("when no application is detected in the working dir", func() {
-		it.Before(func() {
-			applicationFinder.FindCall.Returns.Error = nodestart.NewTargetFileError([]string{"someFile"}, "somePath")
-		})
-		it("fails detection", func() {
-			_, err := detect(packit.DetectContext{
-				WorkingDir: workingDir,
-			})
-			Expect(err).To(Equal(packit.Fail.WithMessage("expected one of the following files to be in your application root (somePath): someFile")))
-			Expect(applicationFinder.FindCall.Receives.WorkingDir).To(Equal(workingDir))
-		})
-	})
+	}, spec.Sequential())
 
 	context("failure cases", func() {
 		context("when the application finder fails", func() {
 			it.Before(func() {
-				applicationFinder.FindCall.Returns.Error = errors.New("finder failed")
+				applicationFinder.FindCall.Returns.Error = errors.New("application finder failed")
 			})
 
 			it("fails with helpful error", func() {
 				_, err := detect(packit.DetectContext{
 					WorkingDir: workingDir,
 				})
-				Expect(err).To(MatchError("finder failed"))
+				Expect(err).To(MatchError("application finder failed"))
+			})
+		})
+
+		context("when the package.json cannot be found", func() {
+			it.Before(func() {
+				Expect(os.Chmod(workingDir, 0000)).To(Succeed())
+			})
+
+			it.After(func() {
+				Expect(os.Chmod(workingDir, os.ModePerm)).To(Succeed())
+			})
+
+			it("fails with helpful error", func() {
+				_, err := detect(packit.DetectContext{
+					WorkingDir: workingDir,
+				})
+				Expect(err).To(MatchError(ContainSubstring("permission denied")))
 			})
 		})
 
@@ -149,6 +181,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 				})
 				Expect(err).To(MatchError(ContainSubstring("failed to parse BP_LIVE_RELOAD_ENABLED value not-a-bool")))
 			})
-		})
+		}, spec.Sequential())
 	})
 }

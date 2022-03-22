@@ -58,8 +58,8 @@ func testLaunchpoint(t *testing.T, context spec.G, it spec.S) {
 			image, logs, err = pack.Build.
 				WithPullPolicy("never").
 				WithBuildpacks(
-					nodeEngineBuildpack,
-					buildpack,
+					settings.Buildpacks.NodeEngine.Online,
+					settings.Buildpacks.NodeStart.Online,
 				).
 				WithEnv(map[string]string{"BP_LAUNCHPOINT": "./src/launchpoint.js"}).
 				Execute(name, source)
@@ -75,7 +75,7 @@ func testLaunchpoint(t *testing.T, context spec.G, it spec.S) {
 			Eventually(container).Should(Serve(ContainSubstring("hello world")).OnPort(8080))
 
 			Expect(logs).To(ContainLines(
-				MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, buildpackInfo.Buildpack.Name)),
+				MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.Buildpack.Name)),
 				"  Assigning launch processes:",
 				"    web (default): node src/launchpoint.js",
 			))

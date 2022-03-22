@@ -2,8 +2,6 @@ package integration_test
 
 import (
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"os"
 	"path/filepath"
 	"testing"
@@ -60,8 +58,8 @@ func testDefault(t *testing.T, context spec.G, it spec.S) {
 			image, logs, err = pack.Build.
 				WithPullPolicy("never").
 				WithBuildpacks(
-					nodeEngineBuildpack,
-					buildpack,
+					settings.Buildpacks.NodeEngine.Online,
+					settings.Buildpacks.NodeStart.Online,
 				).
 				Execute(name, source)
 			Expect(err).ToNot(HaveOccurred(), logs.String)
@@ -73,18 +71,10 @@ func testDefault(t *testing.T, context spec.G, it spec.S) {
 				Execute(image.ID)
 			Expect(err).NotTo(HaveOccurred())
 
-			Eventually(container).Should(BeAvailable())
-
-			response, err := http.Get(fmt.Sprintf("http://localhost:%s", container.HostPort("8080")))
-			Expect(err).NotTo(HaveOccurred())
-			Expect(response.StatusCode).To(Equal(http.StatusOK))
-
-			content, err := ioutil.ReadAll(response.Body)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(string(content)).To(ContainSubstring("hello world"))
+			Eventually(container).Should(Serve(ContainSubstring("hello world")))
 
 			Expect(logs).To(ContainLines(
-				MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, buildpackInfo.Buildpack.Name)),
+				MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.Buildpack.Name)),
 				"  Assigning launch processes:",
 				"    web (default): node server.js",
 			))
@@ -106,9 +96,9 @@ func testDefault(t *testing.T, context spec.G, it spec.S) {
 				image, logs, err = pack.Build.
 					WithPullPolicy("never").
 					WithBuildpacks(
-						nodeEngineBuildpack,
-						watchexecBuildpack,
-						buildpack,
+						settings.Buildpacks.NodeEngine.Online,
+						settings.Buildpacks.Watchexec.Online,
+						settings.Buildpacks.NodeStart.Online,
 					).
 					WithEnv(map[string]string{
 						"BP_LIVE_RELOAD_ENABLED": "true",
@@ -136,7 +126,7 @@ func testDefault(t *testing.T, context spec.G, it spec.S) {
 				Eventually(noReloadContainer).Should(Serve(ContainSubstring("hello world")).OnPort(8080))
 
 				Expect(logs).To(ContainLines(
-					MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, buildpackInfo.Buildpack.Name)),
+					MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.Buildpack.Name)),
 					"  Assigning launch processes:",
 					"    web (default): watchexec --restart --watch /workspace --shell none -- node server.js",
 					"    no-reload:     node server.js",

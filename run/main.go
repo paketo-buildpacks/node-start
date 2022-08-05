@@ -10,12 +10,13 @@ import (
 
 func main() {
 	nodeApplicationFinder := nodestart.NewNodeApplicationFinder()
-
+	logger := scribe.NewEmitter(os.Stdout).WithLevel(os.Getenv("BP_LOG_LEVEL"))
+	
 	packit.Run(
 		nodestart.Detect(nodeApplicationFinder),
 		nodestart.Build(
 			nodeApplicationFinder,
-			scribe.NewEmitter(os.Stdout),
+			logger,
 		),
 	)
 }

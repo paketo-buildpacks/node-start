@@ -3,7 +3,7 @@ api = "0.7"
 [buildpack]
   homepage = "https://github.com/paketo-buildpacks/node-start"
   id = "paketo-buildpacks/node-start"
-  name = "Paketo Node Start Buildpack"
+  name = "Paketo Buildpack for Node Start"
 
   [[buildpack.licenses]]
     type = "Apache-2.0"

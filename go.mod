@@ -1,6 +1,6 @@
 module github.com/paketo-buildpacks/node-start
 
-go 1.18
+go 1.19
 
 require (
 	github.com/BurntSushi/toml v1.2.0

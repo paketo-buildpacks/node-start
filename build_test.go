@@ -27,7 +27,8 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 		applicationFinder *fakes.ApplicationFinder
 
-		build packit.BuildFunc
+		buildContext packit.BuildContext
+		build        packit.BuildFunc
 	)
 
 	it.Before(func() {
@@ -46,17 +47,8 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 		buffer = bytes.NewBuffer(nil)
 		logger := scribe.NewEmitter(buffer)
-		build = nodestart.Build(applicationFinder, logger)
-	})
 
-	it.After(func() {
-		Expect(os.RemoveAll(layersDir)).To(Succeed())
-		Expect(os.RemoveAll(cnbDir)).To(Succeed())
-		Expect(os.RemoveAll(workingDir)).To(Succeed())
-	})
-
-	it("returns a result that provides a node start command", func() {
-		result, err := build(packit.BuildContext{
+		buildContext = packit.BuildContext{
 			WorkingDir: workingDir,
 			CNBPath:    cnbDir,
 			Stack:      "some-stack",
@@ -68,7 +60,18 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 				Entries: []packit.BuildpackPlanEntry{},
 			},
 			Layers: packit.Layers{Path: layersDir},
-		})
+		}
+		build = nodestart.Build(applicationFinder, logger)
+	})
+
+	it.After(func() {
+		Expect(os.RemoveAll(layersDir)).To(Succeed())
+		Expect(os.RemoveAll(cnbDir)).To(Succeed())
+		Expect(os.RemoveAll(workingDir)).To(Succeed())
+	})
+
+	it("returns a result that provides a node start command", func() {
+		result, err := build(buildContext)
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(result).To(Equal(packit.BuildResult{
@@ -106,19 +109,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		})
 
 		it("adds a reloadable start command and makes it the default", func() {
-			result, err := build(packit.BuildContext{
-				WorkingDir: workingDir,
-				CNBPath:    cnbDir,
-				Stack:      "some-stack",
-				BuildpackInfo: packit.BuildpackInfo{
-					Name:    "Some Buildpack",
-					Version: "some-version",
-				},
-				Plan: packit.BuildpackPlan{
-					Entries: []packit.BuildpackPlanEntry{},
-				},
-				Layers: packit.Layers{Path: layersDir},
-			})
+			result, err := build(buildContext)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(result.Launch.Processes).To(Equal([]packit.Process{
@@ -154,22 +145,10 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		context("when the application finding fails", func() {
 			it.Before(func() {
 				applicationFinder.FindCall.Returns.Error = errors.New("failed to find application")
-
 			})
+
 			it("returns an error", func() {
-				_, err := build(packit.BuildContext{
-					WorkingDir: workingDir,
-					CNBPath:    cnbDir,
-					Stack:      "some-stack",
-					BuildpackInfo: packit.BuildpackInfo{
-						Name:    "Some Buildpack",
-						Version: "some-version",
-					},
-					Plan: packit.BuildpackPlan{
-						Entries: []packit.BuildpackPlanEntry{},
-					},
-					Layers: packit.Layers{Path: layersDir},
-				})
+				_, err := build(buildContext)
 				Expect(err).To(MatchError("failed to find application"))
 			})
 		})
@@ -183,19 +162,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			})
 
 			it("returns an error", func() {
-				_, err := build(packit.BuildContext{
-					WorkingDir: workingDir,
-					CNBPath:    cnbDir,
-					Stack:      "some-stack",
-					BuildpackInfo: packit.BuildpackInfo{
-						Name:    "Some Buildpack",
-						Version: "some-version",
-					},
-					Plan: packit.BuildpackPlan{
-						Entries: []packit.BuildpackPlanEntry{},
-					},
-					Layers: packit.Layers{Path: layersDir},
-				})
+				_, err := build(buildContext)
 				Expect(err).To(MatchError(ContainSubstring("failed to parse BP_LIVE_RELOAD_ENABLED value not-a-bool")))
 			})
 		})

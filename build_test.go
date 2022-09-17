@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"os"
 	"testing"
 
 	nodestart "github.com/paketo-buildpacks/node-start"
@@ -32,15 +31,9 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 	)
 
 	it.Before(func() {
-		var err error
-		layersDir, err = os.MkdirTemp("", "layers")
-		Expect(err).NotTo(HaveOccurred())
-
-		cnbDir, err = os.MkdirTemp("", "cnb")
-		Expect(err).NotTo(HaveOccurred())
-
-		workingDir, err = os.MkdirTemp("", "working-dir")
-		Expect(err).NotTo(HaveOccurred())
+		layersDir = t.TempDir()
+		cnbDir = t.TempDir()
+		workingDir = t.TempDir()
 
 		applicationFinder = &fakes.ApplicationFinder{}
 		applicationFinder.FindCall.Returns.String = "server.js"
@@ -62,12 +55,6 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			Layers: packit.Layers{Path: layersDir},
 		}
 		build = nodestart.Build(applicationFinder, logger)
-	})
-
-	it.After(func() {
-		Expect(os.RemoveAll(layersDir)).To(Succeed())
-		Expect(os.RemoveAll(cnbDir)).To(Succeed())
-		Expect(os.RemoveAll(workingDir)).To(Succeed())
 	})
 
 	it("returns a result that provides a node start command", func() {
@@ -101,11 +88,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 	context("when BP_LIVE_RELOAD_ENABLED=true in the build environment", func() {
 		it.Before(func() {
-			os.Setenv("BP_LIVE_RELOAD_ENABLED", "true")
-		})
-
-		it.After(func() {
-			os.Unsetenv("BP_LIVE_RELOAD_ENABLED")
+			t.Setenv("BP_LIVE_RELOAD_ENABLED", "true")
 		})
 
 		it("adds a reloadable start command and makes it the default", func() {
@@ -154,11 +137,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		})
 		context("when BP_LIVE_RELOAD_ENABLED is set to an invalid value", func() {
 			it.Before(func() {
-				os.Setenv("BP_LIVE_RELOAD_ENABLED", "not-a-bool")
-			})
-
-			it.After(func() {
-				os.Unsetenv("BP_LIVE_RELOAD_ENABLED")
+				t.Setenv("BP_LIVE_RELOAD_ENABLED", "not-a-bool")
 			})
 
 			it("returns an error", func() {

@@ -21,16 +21,10 @@ func testNodeApplicationFinder(t *testing.T, context spec.G, it spec.S) {
 	)
 
 	it.Before(func() {
-		var err error
-		workingDir, err = os.MkdirTemp("", "working-dir")
-		Expect(err).NotTo(HaveOccurred())
+		workingDir = t.TempDir()
 
 		Expect(os.WriteFile(filepath.Join(workingDir, "server.js"), nil, 0600)).To(Succeed())
 		Expect(os.WriteFile(filepath.Join(workingDir, "app.js"), nil, 0600)).To(Succeed())
-	})
-
-	it.After(func() {
-		Expect(os.RemoveAll(workingDir)).To(Succeed())
 	})
 
 	it("finds the application entrypoint", func() {

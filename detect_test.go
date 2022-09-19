@@ -19,6 +19,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		Expect = NewWithT(t).Expect
 
 		applicationFinder *fakes.ApplicationFinder
+		reloader          *fakes.Reloader
 
 		detect     packit.DetectFunc
 		workingDir string
@@ -30,7 +31,9 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		applicationFinder = &fakes.ApplicationFinder{}
 		applicationFinder.FindCall.Returns.String = "./src/server.js"
 
-		detect = nodestart.Detect(applicationFinder)
+		reloader = &fakes.Reloader{}
+
+		detect = nodestart.Detect(applicationFinder, reloader)
 	})
 
 	context("when an application is detected in the working dir", func() {
@@ -62,9 +65,9 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 			Expect(applicationFinder.FindCall.Receives.ProjectPath).To(Equal("./src"))
 		})
 
-		context("when BP_LIVE_RELOAD_ENABLED=true", func() {
+		context("when live reload is enabled", func() {
 			it.Before(func() {
-				t.Setenv("BP_LIVE_RELOAD_ENABLED", "true")
+				reloader.ShouldEnableLiveReloadCall.Returns.Bool = true
 			})
 
 			it("requires watchexec at launch time", func() {
@@ -150,16 +153,16 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 			})
 		})
 
-		context("when BP_LIVE_RELOAD_ENABLED is set to an invalid value", func() {
+		context("when the reloader returns an error", func() {
 			it.Before(func() {
-				t.Setenv("BP_LIVE_RELOAD_ENABLED", "not-a-bool")
+				reloader.ShouldEnableLiveReloadCall.Returns.Error = errors.New("reloader error")
 			})
 
 			it("returns an error", func() {
 				_, err := detect(packit.DetectContext{
 					WorkingDir: workingDir,
 				})
-				Expect(err).To(MatchError(ContainSubstring("failed to parse BP_LIVE_RELOAD_ENABLED value not-a-bool")))
+				Expect(err).To(MatchError("reloader error"))
 			})
 		}, spec.Sequential())
 	})

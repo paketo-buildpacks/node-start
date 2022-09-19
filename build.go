@@ -3,11 +3,12 @@ package nodestart
 import (
 	"os"
 
+	"github.com/paketo-buildpacks/libreload-packit"
 	"github.com/paketo-buildpacks/packit/v2"
 	"github.com/paketo-buildpacks/packit/v2/scribe"
 )
 
-func Build(applicationFinder ApplicationFinder, logger scribe.Emitter) packit.BuildFunc {
+func Build(applicationFinder ApplicationFinder, logger scribe.Emitter, reloader Reloader) packit.BuildFunc {
 	return func(context packit.BuildContext) (packit.BuildResult, error) {
 		logger.Title("%s %s", context.BuildpackInfo.Name, context.BuildpackInfo.Version)
 
@@ -16,46 +17,26 @@ func Build(applicationFinder ApplicationFinder, logger scribe.Emitter) packit.Bu
 			return packit.BuildResult{}, err
 		}
 
-		command := "node"
-		args := []string{file}
-
-		processes := []packit.Process{
-			{
-				Type:    "web",
-				Command: command,
-				Args:    args,
-				Default: true,
-				Direct:  true,
-			},
+		originalProcess := packit.Process{
+			Type:    "web",
+			Command: "node",
+			Args:    []string{file},
+			Default: true,
+			Direct:  true,
 		}
 
-		shouldReload, err := checkLiveReloadEnabled()
-		if err != nil {
+		var processes []packit.Process
+		if shouldEnableReload, err := reloader.ShouldEnableLiveReload(); err != nil {
 			return packit.BuildResult{}, err
-		}
-
-		if shouldReload {
-			processes = []packit.Process{
-				{
-					Type:    "web",
-					Command: "watchexec",
-					Args: append([]string{
-						"--restart",
-						"--watch", context.WorkingDir,
-						"--shell", "none",
-						"--",
-						command,
-					}, args...),
-					Direct:  true,
-					Default: true,
-				},
-				{
-					Type:    "no-reload",
-					Command: command,
-					Args:    args,
-					Direct:  true,
-				},
-			}
+		} else if shouldEnableReload {
+			nonReloadableProcess, reloadableProcess := reloader.TransformReloadableProcesses(originalProcess, libreload.ReloadableProcessSpec{
+				WatchPaths: []string{context.WorkingDir},
+			})
+			reloadableProcess.Type = "web"
+			nonReloadableProcess.Type = "no-reload"
+			processes = append(processes, reloadableProcess, nonReloadableProcess)
+		} else {
+			processes = append(processes, originalProcess)
 		}
 
 		logger.LaunchProcesses(processes)

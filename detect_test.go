@@ -47,7 +47,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 			})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result.Plan).To(Equal(packit.BuildPlan{
-				Provides: []packit.BuildPlanProvision{},
 				Requires: []packit.BuildPlanRequirement{
 					{
 						Name: "node",

@@ -3,9 +3,9 @@ package nodestart_test
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"testing"
 
+	"github.com/paketo-buildpacks/libreload-packit"
 	nodestart "github.com/paketo-buildpacks/node-start"
 	"github.com/paketo-buildpacks/node-start/fakes"
 	"github.com/paketo-buildpacks/packit/v2"
@@ -25,6 +25,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		buffer     *bytes.Buffer
 
 		applicationFinder *fakes.ApplicationFinder
+		reloader          *fakes.Reloader
 
 		buildContext packit.BuildContext
 		build        packit.BuildFunc
@@ -37,6 +38,8 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 		applicationFinder = &fakes.ApplicationFinder{}
 		applicationFinder.FindCall.Returns.String = "server.js"
+
+		reloader = &fakes.Reloader{}
 
 		buffer = bytes.NewBuffer(nil)
 		logger := scribe.NewEmitter(buffer)
@@ -54,7 +57,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			},
 			Layers: packit.Layers{Path: layersDir},
 		}
-		build = nodestart.Build(applicationFinder, logger)
+		build = nodestart.Build(applicationFinder, logger, reloader)
 	})
 
 	it("returns a result that provides a node start command", func() {
@@ -86,9 +89,17 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		Expect(buffer.String()).To(ContainSubstring("node server.js"))
 	})
 
-	context("when BP_LIVE_RELOAD_ENABLED=true in the build environment", func() {
+	context("when live reload is enabled", func() {
 		it.Before(func() {
-			t.Setenv("BP_LIVE_RELOAD_ENABLED", "true")
+			reloader.ShouldEnableLiveReloadCall.Returns.Bool = true
+			reloader.TransformReloadableProcessesCall.Returns.Reloadable = packit.Process{
+				Type:    "Reloadable",
+				Command: "Reloadable-Command",
+			}
+			reloader.TransformReloadableProcessesCall.Returns.NonReloadable = packit.Process{
+				Type:    "Nonreloadable",
+				Command: "Nonreloadable-Command",
+			}
 		})
 
 		it("adds a reloadable start command and makes it the default", func() {
@@ -98,29 +109,28 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			Expect(result.Launch.Processes).To(Equal([]packit.Process{
 				{
 					Type:    "web",
-					Command: "watchexec",
-					Args: []string{
-						"--restart",
-						"--watch", workingDir,
-						"--shell", "none",
-						"--",
-						"node", "server.js",
-					},
-					Default: true,
-					Direct:  true,
+					Command: "Reloadable-Command",
 				},
 				{
 					Type:    "no-reload",
-					Command: "node",
-					Args:    []string{"server.js"},
-					Direct:  true,
+					Command: "Nonreloadable-Command",
 				},
+			}))
+
+			Expect(reloader.TransformReloadableProcessesCall.Receives.OriginalProcess).To(Equal(packit.Process{
+				Type:    "web",
+				Command: "node",
+				Args:    []string{"server.js"},
+				Default: true,
+				Direct:  true,
+			}))
+
+			Expect(reloader.TransformReloadableProcessesCall.Receives.Spec).To(Equal(libreload.ReloadableProcessSpec{
+				WatchPaths: []string{workingDir},
 			}))
 
 			Expect(buffer.String()).To(ContainSubstring("Some Buildpack some-version"))
 			Expect(buffer.String()).To(ContainSubstring("Assigning launch processes"))
-			Expect(buffer.String()).To(ContainSubstring(fmt.Sprintf(`watchexec --restart --watch %s --shell none -- node server.js`, workingDir)))
-			Expect(buffer.String()).To(ContainSubstring("node server.js"))
 		})
 	})
 
@@ -135,14 +145,15 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 				Expect(err).To(MatchError("failed to find application"))
 			})
 		})
-		context("when BP_LIVE_RELOAD_ENABLED is set to an invalid value", func() {
+
+		context("when the reloader returns an error", func() {
 			it.Before(func() {
-				t.Setenv("BP_LIVE_RELOAD_ENABLED", "not-a-bool")
+				reloader.ShouldEnableLiveReloadCall.Returns.Error = errors.New("reloader error")
 			})
 
 			it("returns an error", func() {
 				_, err := build(buildContext)
-				Expect(err).To(MatchError(ContainSubstring("failed to parse BP_LIVE_RELOAD_ENABLED value not-a-bool")))
+				Expect(err).To(MatchError("reloader error"))
 			})
 		})
 	})

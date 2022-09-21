@@ -1,11 +1,10 @@
 package nodestart
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
-	"strconv"
 
+	"github.com/paketo-buildpacks/libreload-packit"
 	"github.com/paketo-buildpacks/packit/v2"
 	"github.com/paketo-buildpacks/packit/v2/fs"
 )
@@ -15,7 +14,11 @@ type ApplicationFinder interface {
 	Find(workingDir, launchpoint, projectPath string) (string, error)
 }
 
-func Detect(applicationFinder ApplicationFinder) packit.DetectFunc {
+type Reloader libreload.Reloader
+
+//go:generate faux --interface Reloader --output fakes/reloader.go
+
+func Detect(applicationFinder ApplicationFinder, reloader Reloader) packit.DetectFunc {
 	return func(context packit.DetectContext) (packit.DetectResult, error) {
 		_, err := applicationFinder.Find(context.WorkingDir, os.Getenv("BP_LAUNCHPOINT"), os.Getenv("BP_NODE_PROJECT_PATH"))
 		if err != nil {
@@ -30,7 +33,7 @@ func Detect(applicationFinder ApplicationFinder) packit.DetectFunc {
 			requirements = append(requirements, newLaunchRequirement("node_modules"))
 		}
 
-		if shouldReload, err := checkLiveReloadEnabled(); err != nil {
+		if shouldReload, err := reloader.ShouldEnableLiveReload(); err != nil {
 			return packit.DetectResult{}, err
 		} else if shouldReload {
 			requirements = append(requirements, newLaunchRequirement("watchexec"))
@@ -42,17 +45,6 @@ func Detect(applicationFinder ApplicationFinder) packit.DetectFunc {
 			},
 		}, nil
 	}
-}
-
-func checkLiveReloadEnabled() (bool, error) {
-	if reload, ok := os.LookupEnv("BP_LIVE_RELOAD_ENABLED"); ok {
-		shouldEnableReload, err := strconv.ParseBool(reload)
-		if err != nil {
-			return false, fmt.Errorf("failed to parse BP_LIVE_RELOAD_ENABLED value %s: %w", reload, err)
-		}
-		return shouldEnableReload, nil
-	}
-	return false, nil
 }
 
 func newLaunchRequirement(name string) packit.BuildPlanRequirement {

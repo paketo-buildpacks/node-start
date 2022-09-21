@@ -22,46 +22,22 @@ func Detect(applicationFinder ApplicationFinder) packit.DetectFunc {
 			return packit.DetectResult{}, err
 		}
 
-		requirements := []packit.BuildPlanRequirement{
-			{
-				Name: "node",
-				Metadata: map[string]interface{}{
-					"launch": true,
-				},
-			},
-		}
+		requirements := []packit.BuildPlanRequirement{newLaunchRequirement("node")}
 
-		exists, err := fs.Exists(filepath.Join(context.WorkingDir, os.Getenv("BP_NODE_PROJECT_PATH"), "package.json"))
-		if err != nil {
+		if packageJsonExists, err := fs.Exists(filepath.Join(context.WorkingDir, os.Getenv("BP_NODE_PROJECT_PATH"), "package.json")); err != nil {
 			return packit.DetectResult{}, err
+		} else if packageJsonExists {
+			requirements = append(requirements, newLaunchRequirement("node_modules"))
 		}
 
-		if exists {
-			requirements = append(requirements, packit.BuildPlanRequirement{
-				Name: "node_modules",
-				Metadata: map[string]interface{}{
-					"launch": true,
-				},
-			})
-		}
-
-		shouldReload, err := checkLiveReloadEnabled()
-		if err != nil {
+		if shouldReload, err := checkLiveReloadEnabled(); err != nil {
 			return packit.DetectResult{}, err
-		}
-
-		if shouldReload {
-			requirements = append(requirements, packit.BuildPlanRequirement{
-				Name: "watchexec",
-				Metadata: map[string]interface{}{
-					"launch": true,
-				},
-			})
+		} else if shouldReload {
+			requirements = append(requirements, newLaunchRequirement("watchexec"))
 		}
 
 		return packit.DetectResult{
 			Plan: packit.BuildPlan{
-				Provides: []packit.BuildPlanProvision{},
 				Requires: requirements,
 			},
 		}, nil
@@ -77,4 +53,13 @@ func checkLiveReloadEnabled() (bool, error) {
 		return shouldEnableReload, nil
 	}
 	return false, nil
+}
+
+func newLaunchRequirement(name string) packit.BuildPlanRequirement {
+	return packit.BuildPlanRequirement{
+		Name: name,
+		Metadata: map[string]interface{}{
+			"launch": true,
+		},
+	}
 }

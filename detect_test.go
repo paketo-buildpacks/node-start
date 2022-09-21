@@ -25,9 +25,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 	)
 
 	it.Before(func() {
-		var err error
-		workingDir, err = os.MkdirTemp("", "working-dir")
-		Expect(err).NotTo(HaveOccurred())
+		workingDir = t.TempDir()
 
 		applicationFinder = &fakes.ApplicationFinder{}
 		applicationFinder.FindCall.Returns.String = "./src/server.js"
@@ -37,15 +35,10 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 
 	context("when an application is detected in the working dir", func() {
 		it.Before(func() {
-			os.Setenv("BP_NODE_PROJECT_PATH", "./src")
-			os.Setenv("BP_LAUNCHPOINT", "./src/server.js")
+			t.Setenv("BP_NODE_PROJECT_PATH", "./src")
+			t.Setenv("BP_LAUNCHPOINT", "./src/server.js")
 			Expect(os.MkdirAll(filepath.Join(workingDir, "src"), os.ModePerm)).To(Succeed())
 			Expect(os.WriteFile(filepath.Join(workingDir, "src", "server.js"), nil, 0600)).To(Succeed())
-		})
-
-		it.After(func() {
-			os.Unsetenv("BP_NODE_PROJECT_PATH")
-			os.Unsetenv("BP_LAUNCHPOINT")
 		})
 
 		it("detects", func() {
@@ -54,7 +47,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 			})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result.Plan).To(Equal(packit.BuildPlan{
-				Provides: []packit.BuildPlanProvision{},
 				Requires: []packit.BuildPlanRequirement{
 					{
 						Name: "node",
@@ -72,11 +64,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 
 		context("when BP_LIVE_RELOAD_ENABLED=true", func() {
 			it.Before(func() {
-				os.Setenv("BP_LIVE_RELOAD_ENABLED", "true")
-			})
-
-			it.After(func() {
-				os.Unsetenv("BP_LIVE_RELOAD_ENABLED")
+				t.Setenv("BP_LIVE_RELOAD_ENABLED", "true")
 			})
 
 			it("requires watchexec at launch time", func() {
@@ -104,13 +92,9 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 
 	context("when a package.json is detected in the working dir", func() {
 		it.Before(func() {
-			os.Setenv("BP_NODE_PROJECT_PATH", "./src")
+			t.Setenv("BP_NODE_PROJECT_PATH", "./src")
 			Expect(os.MkdirAll(filepath.Join(workingDir, "src"), os.ModePerm)).To(Succeed())
 			Expect(os.WriteFile(filepath.Join(workingDir, "src", "package.json"), nil, 0600)).To(Succeed())
-		})
-
-		it.After(func() {
-			os.Unsetenv("BP_NODE_PROJECT_PATH")
 		})
 
 		it("requires node_modules", func() {
@@ -168,11 +152,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 
 		context("when BP_LIVE_RELOAD_ENABLED is set to an invalid value", func() {
 			it.Before(func() {
-				os.Setenv("BP_LIVE_RELOAD_ENABLED", "not-a-bool")
-			})
-
-			it.After(func() {
-				os.Unsetenv("BP_LIVE_RELOAD_ENABLED")
+				t.Setenv("BP_LIVE_RELOAD_ENABLED", "not-a-bool")
 			})
 
 			it("returns an error", func() {

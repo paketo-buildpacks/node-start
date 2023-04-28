@@ -97,7 +97,8 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		it.Before(func() {
 			t.Setenv("BP_NODE_PROJECT_PATH", "./src")
 			Expect(os.MkdirAll(filepath.Join(workingDir, "src"), os.ModePerm)).To(Succeed())
-			Expect(os.WriteFile(filepath.Join(workingDir, "src", "package.json"), nil, 0600)).To(Succeed())
+			Expect(os.WriteFile(filepath.Join(workingDir, "src", "package.json"), []byte(`{}`), 0600)).To(Succeed())
+
 		})
 
 		it("requires node_modules", func() {

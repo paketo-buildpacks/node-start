@@ -2,11 +2,10 @@ package nodestart
 
 import (
 	"os"
-	"path/filepath"
 
+	"github.com/paketo-buildpacks/libnodejs"
 	"github.com/paketo-buildpacks/libreload-packit"
 	"github.com/paketo-buildpacks/packit/v2"
-	"github.com/paketo-buildpacks/packit/v2/fs"
 )
 
 //go:generate faux --interface ApplicationFinder --output fakes/application_finder.go
@@ -27,9 +26,16 @@ func Detect(applicationFinder ApplicationFinder, reloader Reloader) packit.Detec
 
 		requirements := []packit.BuildPlanRequirement{newLaunchRequirement("node")}
 
-		if packageJsonExists, err := fs.Exists(filepath.Join(context.WorkingDir, os.Getenv("BP_NODE_PROJECT_PATH"), "package.json")); err != nil {
+		projectPath, err := libnodejs.FindProjectPath(context.WorkingDir)
+		if err != nil {
 			return packit.DetectResult{}, err
-		} else if packageJsonExists {
+		}
+
+		if _, err := libnodejs.ParsePackageJSON(projectPath); err != nil {
+			if !os.IsNotExist(err) {
+				return packit.DetectResult{}, err
+			}
+		} else {
 			requirements = append(requirements, newLaunchRequirement("node_modules"))
 		}
 

@@ -3,6 +3,9 @@ package nodestart_test
 import (
 	"bytes"
 	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/paketo-buildpacks/libreload-packit"
@@ -24,8 +27,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		cnbDir     string
 		buffer     *bytes.Buffer
 
-		applicationFinder *fakes.ApplicationFinder
-		reloader          *fakes.Reloader
+		reloader *fakes.Reloader
 
 		buildContext packit.BuildContext
 		build        packit.BuildFunc
@@ -36,8 +38,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		cnbDir = t.TempDir()
 		workingDir = t.TempDir()
 
-		applicationFinder = &fakes.ApplicationFinder{}
-		applicationFinder.FindCall.Returns.String = "server.js"
+		Expect(os.WriteFile(filepath.Join(workingDir, "server.js"), nil, 0600)).To(Succeed())
 
 		reloader = &fakes.Reloader{}
 
@@ -57,7 +58,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			},
 			Layers: packit.Layers{Path: layersDir},
 		}
-		build = nodestart.Build(applicationFinder, logger, reloader)
+		build = nodestart.Build(logger, reloader)
 	})
 
 	it("returns a result that provides a node start command", func() {
@@ -81,8 +82,6 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 				},
 			},
 		}))
-
-		Expect(applicationFinder.FindCall.Receives.WorkingDir).To(Equal(workingDir))
 
 		Expect(buffer.String()).To(ContainSubstring("Some Buildpack some-version"))
 		Expect(buffer.String()).To(ContainSubstring("Assigning launch processes"))
@@ -137,12 +136,12 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 	context("failure cases", func() {
 		context("when the application finding fails", func() {
 			it.Before(func() {
-				applicationFinder.FindCall.Returns.Error = errors.New("failed to find application")
+				Expect(os.Remove(filepath.Join(workingDir, "server.js"))).To(Succeed())
 			})
 
 			it("returns an error", func() {
 				_, err := build(buildContext)
-				Expect(err).To(MatchError("failed to find application"))
+				Expect(err).To(MatchError(fmt.Errorf("could not find app in %s: expected one of server.js | app.js | main.js | index.js", workingDir)))
 			})
 		})
 

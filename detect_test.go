@@ -2,6 +2,7 @@ package nodestart_test
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -18,8 +19,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 	var (
 		Expect = NewWithT(t).Expect
 
-		applicationFinder *fakes.ApplicationFinder
-		reloader          *fakes.Reloader
+		reloader *fakes.Reloader
 
 		detect     packit.DetectFunc
 		workingDir string
@@ -28,12 +28,9 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 	it.Before(func() {
 		workingDir = t.TempDir()
 
-		applicationFinder = &fakes.ApplicationFinder{}
-		applicationFinder.FindCall.Returns.String = "./src/server.js"
-
 		reloader = &fakes.Reloader{}
 
-		detect = nodestart.Detect(applicationFinder, reloader)
+		detect = nodestart.Detect(reloader)
 	})
 
 	context("when an application is detected in the working dir", func() {
@@ -59,10 +56,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 					},
 				},
 			}))
-
-			Expect(applicationFinder.FindCall.Receives.WorkingDir).To(Equal(workingDir))
-			Expect(applicationFinder.FindCall.Receives.Launchpoint).To(Equal("./src/server.js"))
-			Expect(applicationFinder.FindCall.Receives.ProjectPath).To(Equal("./src"))
 		})
 
 		context("when live reload is enabled", func() {
@@ -98,7 +91,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 			t.Setenv("BP_NODE_PROJECT_PATH", "./src")
 			Expect(os.MkdirAll(filepath.Join(workingDir, "src"), os.ModePerm)).To(Succeed())
 			Expect(os.WriteFile(filepath.Join(workingDir, "src", "package.json"), []byte(`{}`), 0600)).To(Succeed())
-
+			Expect(os.WriteFile(filepath.Join(workingDir, "src", "server.js"), nil, 0600)).To(Succeed())
 		})
 
 		it("requires node_modules", func() {
@@ -125,15 +118,11 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 
 	context("failure cases", func() {
 		context("when the application finder fails", func() {
-			it.Before(func() {
-				applicationFinder.FindCall.Returns.Error = errors.New("application finder failed")
-			})
-
 			it("fails with helpful error", func() {
 				_, err := detect(packit.DetectContext{
 					WorkingDir: workingDir,
 				})
-				Expect(err).To(MatchError("application finder failed"))
+				Expect(err).To(MatchError(fmt.Errorf("could not find app in %s: expected one of server.js | app.js | main.js | index.js", workingDir)))
 			})
 		})
 
@@ -156,6 +145,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 
 		context("when the reloader returns an error", func() {
 			it.Before(func() {
+				Expect(os.WriteFile(filepath.Join(workingDir, "server.js"), nil, 0600)).To(Succeed())
 				reloader.ShouldEnableLiveReloadCall.Returns.Error = errors.New("reloader error")
 			})
 

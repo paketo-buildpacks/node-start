@@ -17,9 +17,9 @@ type Reloader libreload.Reloader
 
 //go:generate faux --interface Reloader --output fakes/reloader.go
 
-func Detect(applicationFinder ApplicationFinder, reloader Reloader) packit.DetectFunc {
+func Detect(reloader Reloader) packit.DetectFunc {
 	return func(context packit.DetectContext) (packit.DetectResult, error) {
-		_, err := applicationFinder.Find(context.WorkingDir, os.Getenv("BP_LAUNCHPOINT"), os.Getenv("BP_NODE_PROJECT_PATH"))
+		_, err := libnodejs.FindNodeApplication(context.WorkingDir)
 		if err != nil {
 			return packit.DetectResult{}, err
 		}

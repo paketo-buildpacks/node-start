@@ -1,18 +1,17 @@
 package nodestart
 
 import (
-	"os"
-
+	"github.com/paketo-buildpacks/libnodejs"
 	"github.com/paketo-buildpacks/libreload-packit"
 	"github.com/paketo-buildpacks/packit/v2"
 	"github.com/paketo-buildpacks/packit/v2/scribe"
 )
 
-func Build(applicationFinder ApplicationFinder, logger scribe.Emitter, reloader Reloader) packit.BuildFunc {
+func Build(logger scribe.Emitter, reloader Reloader) packit.BuildFunc {
 	return func(context packit.BuildContext) (packit.BuildResult, error) {
 		logger.Title("%s %s", context.BuildpackInfo.Name, context.BuildpackInfo.Version)
 
-		file, err := applicationFinder.Find(context.WorkingDir, os.Getenv("BP_LAUNCHPOINT"), os.Getenv("BP_NODE_PROJECT_PATH"))
+		file, err := libnodejs.FindNodeApplication(context.WorkingDir)
 		if err != nil {
 			return packit.BuildResult{}, err
 		}

@@ -10,15 +10,13 @@ import (
 )
 
 func main() {
-	nodeApplicationFinder := nodestart.NewNodeApplicationFinder()
 	logger := scribe.NewEmitter(os.Stdout).WithLevel(os.Getenv("BP_LOG_LEVEL"))
 
 	reloader := watchexec.NewWatchexecReloader()
 
 	packit.Run(
-		nodestart.Detect(nodeApplicationFinder, reloader),
+		nodestart.Detect(reloader),
 		nodestart.Build(
-			nodeApplicationFinder,
 			logger,
 			reloader,
 		),

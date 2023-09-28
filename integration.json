@@ -1,5 +1,9 @@
 {
-  "builders": ["paketobuildpacks/builder-jammy-buildpackless-base"],
+  "builders": [
+    "paketobuildpacks/builder-jammy-buildpackless-base",
+    "index.docker.io/paketocommunity/builder-ubi-buildpackless-base:latest"
+  ],
+  "ubi-nodejs-extension": "github.com/paketo-community/ubi-nodejs-extension",
   "node-engine": "github.com/paketo-buildpacks/node-engine",
   "npm-install": "github.com/paketo-buildpacks/npm-install",
   "watchexec": "github.com/paketo-buildpacks/watchexec"

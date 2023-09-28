@@ -20,11 +20,21 @@ func testProjectPath(t *testing.T, context spec.G, it spec.S) {
 
 		pack   occam.Pack
 		docker occam.Docker
+
+		pullPolicy              = "never"
+		extenderBuildStr        = ""
+		extenderBuildStrEscaped = ""
 	)
 
 	it.Before(func() {
 		pack = occam.NewPack().WithVerbose().WithNoColor()
 		docker = occam.NewDocker()
+
+		if settings.Extensions.UbiNodejsExtension.Online != "" {
+			pullPolicy = "always"
+			extenderBuildStr = "[extender (build)] "
+			extenderBuildStrEscaped = `\[extender \(build\)\] `
+		}
 	})
 
 	context("when building an app with a custom project path", func() {
@@ -56,7 +66,10 @@ func testProjectPath(t *testing.T, context spec.G, it spec.S) {
 
 			var logs fmt.Stringer
 			image, logs, err = pack.Build.
-				WithPullPolicy("never").
+				WithPullPolicy(pullPolicy).
+				WithExtensions(
+					settings.Extensions.UbiNodejsExtension.Online,
+				).
 				WithBuildpacks(
 					settings.Buildpacks.NodeEngine.Online,
 					settings.Buildpacks.NodeStart.Online,
@@ -75,9 +88,9 @@ func testProjectPath(t *testing.T, context spec.G, it spec.S) {
 			Eventually(container).Should(Serve(ContainSubstring("hello world")).OnPort(8080))
 
 			Expect(logs).To(ContainLines(
-				MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.Buildpack.Name)),
-				"  Assigning launch processes:",
-				"    web (default): node src/server.js",
+				MatchRegexp(fmt.Sprintf(`%s%s \d+\.\d+\.\d+`, extenderBuildStrEscaped, settings.Buildpack.Name)),
+				extenderBuildStr+"  Assigning launch processes:",
+				extenderBuildStr+"    web (default): node src/server.js",
 			))
 		})
 	})

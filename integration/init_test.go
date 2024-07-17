@@ -10,6 +10,7 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/onsi/gomega/format"
 	"github.com/paketo-buildpacks/occam"
+	"github.com/paketo-buildpacks/occam/packagers"
 	"github.com/sclevine/spec"
 	"github.com/sclevine/spec/report"
 
@@ -52,8 +53,6 @@ var settings struct {
 }
 
 func TestIntegration(t *testing.T) {
-	var docker = occam.NewDocker()
-
 	format.MaxLength = 0
 	Expect := NewWithT(t).Expect
 	SetDefaultEventuallyTimeout(10 * time.Second)
@@ -75,6 +74,8 @@ func TestIntegration(t *testing.T) {
 	Expect(err).ToNot(HaveOccurred())
 
 	buildpackStore := occam.NewBuildpackStore()
+	libpakBuildpackStore := occam.NewBuildpackStore().WithPackager(packagers.NewLibpak())
+
 	pack := occam.NewPack()
 
 	builder, err := pack.Builder.Inspect.Execute()
@@ -98,11 +99,10 @@ func TestIntegration(t *testing.T) {
 	settings.Buildpacks.NPMInstall.Online, err = buildpackStore.Get.
 		Execute(settings.Config.NPMInstall)
 	Expect(err).ToNot(HaveOccurred())
-	settings.Buildpacks.Watchexec.Online = settings.Config.Watchexec
-	err = docker.Pull.Execute(settings.Buildpacks.Watchexec.Online)
-	if err != nil {
-		t.Fatalf("Failed to pull %s: %s", settings.Buildpacks.Watchexec.Online, err)
-	}
+
+	settings.Buildpacks.Watchexec.Online, err = libpakBuildpackStore.Get.
+		Execute(settings.Config.Watchexec)
+	Expect(err).ToNot(HaveOccurred())
 
 	suite := spec.New("Integration", spec.Report(report.Terminal{}), spec.Parallel())
 	suite("Default", testDefault)

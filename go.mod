@@ -1,4 +1,4 @@
-module github.com/paketo-buildpacks/node-start
+module github.com/paketo-buildpacks/node-start/v2
 
 go 1.22.6
 

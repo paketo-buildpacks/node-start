@@ -88,6 +88,63 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		Expect(buffer.String()).To(ContainSubstring("node server.js"))
 	})
 
+	context("sniff test that files that end something other than js work", func() {
+		it.Before(func() {
+			layersDir = t.TempDir()
+			cnbDir = t.TempDir()
+			workingDir = t.TempDir()
+
+			Expect(os.WriteFile(filepath.Join(workingDir, "app.mjs"), nil, 0600)).To(Succeed())
+
+			reloader = &fakes.Reloader{}
+
+			buffer = bytes.NewBuffer(nil)
+			logger := scribe.NewEmitter(buffer)
+
+			buildContext = packit.BuildContext{
+				WorkingDir: workingDir,
+				CNBPath:    cnbDir,
+				Stack:      "some-stack",
+				BuildpackInfo: packit.BuildpackInfo{
+					Name:    "Some Buildpack",
+					Version: "some-version",
+				},
+				Plan: packit.BuildpackPlan{
+					Entries: []packit.BuildpackPlanEntry{},
+				},
+				Layers: packit.Layers{Path: layersDir},
+			}
+			build = nodestart.Build(logger, reloader)
+		})
+
+		it("returns a result that provides a node start command", func() {
+			result, err := build(buildContext)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(result).To(Equal(packit.BuildResult{
+				Plan: packit.BuildpackPlan{
+					Entries: nil,
+				},
+				Layers: nil,
+				Launch: packit.LaunchMetadata{
+					Processes: []packit.Process{
+						{
+							Type:    "web",
+							Command: "node",
+							Args:    []string{"app.mjs"},
+							Default: true,
+							Direct:  true,
+						},
+					},
+				},
+			}))
+
+			Expect(buffer.String()).To(ContainSubstring("Some Buildpack some-version"))
+			Expect(buffer.String()).To(ContainSubstring("Assigning launch processes"))
+			Expect(buffer.String()).To(ContainSubstring("node app.mjs"))
+		})
+	})
+
 	context("when live reload is enabled", func() {
 		it.Before(func() {
 			reloader.ShouldEnableLiveReloadCall.Returns.Bool = true
@@ -141,7 +198,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 			it("returns an error", func() {
 				_, err := build(buildContext)
-				Expect(err).To(MatchError(fmt.Errorf("could not find app in %s: expected one of server.js | app.js | main.js | index.js", workingDir)))
+				Expect(err).To(MatchError(fmt.Errorf("could not find app in %s: expected one of server.js | server.cjs | server.mjs | app.js | app.cjs | app.mjs | main.js | main.cjs | main.mjs | index.js | index.cjs | index.mjs", workingDir)))
 			})
 		})
 

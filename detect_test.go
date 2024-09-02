@@ -86,6 +86,31 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		})
 	}, spec.Sequential())
 
+	context("sniff test of when an application is detected in the working dir and does not have a js extension", func() {
+		it.Before(func() {
+			Expect(os.MkdirAll(filepath.Join(workingDir, "src"), os.ModePerm)).To(Succeed())
+			Expect(os.WriteFile(filepath.Join(workingDir, "server.mjs"), nil, 0600)).To(Succeed())
+		})
+
+		it("detects", func() {
+			result, err := detect(packit.DetectContext{
+				WorkingDir: workingDir,
+			})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result.Plan).To(Equal(packit.BuildPlan{
+				Requires: []packit.BuildPlanRequirement{
+					{
+						Name: "node",
+						Metadata: map[string]interface{}{
+							"launch": true,
+						},
+					},
+				},
+			}))
+		})
+
+	})
+
 	context("when a package.json is detected in the working dir", func() {
 		it.Before(func() {
 			t.Setenv("BP_NODE_PROJECT_PATH", "./src")
@@ -122,7 +147,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 				_, err := detect(packit.DetectContext{
 					WorkingDir: workingDir,
 				})
-				Expect(err).To(MatchError(fmt.Errorf("could not find app in %s: expected one of server.js | app.js | main.js | index.js", workingDir)))
+				Expect(err).To(MatchError(fmt.Errorf("could not find app in %s: expected one of server.js | server.cjs | server.mjs | app.js | app.cjs | app.mjs | main.js | main.cjs | main.mjs | index.js | index.cjs | index.mjs", workingDir)))
 			})
 		})
 

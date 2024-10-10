@@ -48,11 +48,19 @@ This could be useful if your app is a part of a monorepo.
 
 This buildpack searches your application root for the following files:
 1. `server.js`
+1. `server.cjs`
+1. `server.mjs`
 1. `app.js`
+1. `app.cjs`
+1. `app.mjs`
 1. `main.js`
+1. `main.cjs`
+1. `main.mjs`
 1. `index.js`
+1. `index.cjs`
+1. `index.mjs`
 If you have multiple of the above files in your application root then the
-highest priority file (`server.js > app.js > main.js > index.js`) will be
+highest priority file, for example (`server.js > app.js > main.js > index.js`), will be
 chosen for the start command.
 
 ## BP_LAUNCHPOINT

@@ -52,9 +52,7 @@ This buildpack searches your application root for the following files:
 1. `main.js`
 1. `main.cjs`
 1. `main.mjs`
-1. `index.js`
-1. `index.cjs`
-1. `index.mjs`
+1. `index.[c|m]js`
 If you have multiple of the above files in your application root then the
 highest priority file, for example (`server.js > app.js > main.js > index.js`), will be
 chosen for the start command.

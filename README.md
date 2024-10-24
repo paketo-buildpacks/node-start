@@ -47,9 +47,7 @@ This could be useful if your app is a part of a monorepo.
 ## Application Detection
 
 This buildpack searches your application root for the following files:
-1. `server.js`
-1. `server.cjs`
-1. `server.mjs`
+1. `server.[c|m]js`
 1. `app.js`
 1. `app.cjs`
 1. `app.mjs`

@@ -48,9 +48,7 @@ This could be useful if your app is a part of a monorepo.
 
 This buildpack searches your application root for the following files:
 1. `server.[c|m]js`
-1. `app.js`
-1. `app.cjs`
-1. `app.mjs`
+1. `app.[c|m]js`
 1. `main.js`
 1. `main.cjs`
 1. `main.mjs`

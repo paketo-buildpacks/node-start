@@ -49,9 +49,7 @@ This could be useful if your app is a part of a monorepo.
 This buildpack searches your application root for the following files:
 1. `server.[c|m]js`
 1. `app.[c|m]js`
-1. `main.js`
-1. `main.cjs`
-1. `main.mjs`
+1. `main.[c|m]js`
 1. `index.[c|m]js`
 If you have multiple of the above files in your application root then the
 highest priority file, for example (`server.js > app.js > main.js > index.js`), will be

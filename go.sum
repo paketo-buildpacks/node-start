@@ -2563,8 +2563,8 @@ github.com/paketo-buildpacks/libnodejs v0.3.0 h1:vh2fDuUt/XPPy0ENY3mmRHlb127wVD8
 github.com/paketo-buildpacks/libnodejs v0.3.0/go.mod h1:V8bTCbjjpthcdrDK2g2KL7c0mHQeZJAfN+hQtPpmGuQ=
 github.com/paketo-buildpacks/libreload-packit v0.0.1 h1:K1HhNAqBSzRpefwGOcvdchZwyeNTgNJL9SC7V4paYt8=
 github.com/paketo-buildpacks/libreload-packit v0.0.1/go.mod h1:ZWE3U94Z18yJk8Pc1mP852l9phQsrsZ+An2U98g0rWw=
-github.com/paketo-buildpacks/occam v0.19.0 h1:+6ZM0uSmUYDOcv0yMzIYMvukJG0k0w+IaN3T3hO+D/w=
-github.com/paketo-buildpacks/occam v0.19.0/go.mod h1:Dkr0Un7OriiQ0FkoPuqdHURqT2VG1ZFLmwAIelYbIho=
+github.com/paketo-buildpacks/occam v0.20.0 h1:R9lFiYBy8xVJLa09+3GV2R9jtPB/4yi4CcscqFTCgAA=
+github.com/paketo-buildpacks/occam v0.20.0/go.mod h1:PyG1KPqnnLweufXS1yGPcAKccUs3oqPFZUjIFO9FOZ0=
 github.com/paketo-buildpacks/packit/v2 v2.6.1/go.mod h1:iBArWOfC5xZQF01o+zwnVKS+/hUBuFG+O1jCvzqBujs=
 github.com/paketo-buildpacks/packit/v2 v2.16.0 h1:zy5sszT/awIgpT4NioQolai/0H3ANIXlGW9wCbmwzrQ=
 github.com/paketo-buildpacks/packit/v2 v2.16.0/go.mod h1:LchgmOIDCXSDovrpoyP1J/yQEJq0Ely/vGCdiTp0vtA=

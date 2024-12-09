@@ -63,6 +63,14 @@ start command that is not included in the above set.
 e.g. If `BP_LAUNCHPOINT=./src/launchpoint.js`, the buildpack will verify that
 the file exists and then set the start command using that file `node src/launchpoint.js`
 
+## BP_VERIFY_LAUNCHPOINT
+
+The `BP_VERIFY_LAUNCHPOINT` environment variable may be used to specify the file for the
+start command that is generated and may not exist yet.
+
+e.g. If `BP_LAUNCHPOINT=./gen/launchpoint.js` and If `BP_VERIFY_LAUNCHPOINT=false`, the buildpack will not verify that
+the file exists and then set the start command using that file `node gen/launchpoint.js`
+
 ## Enabling reloadable process types
 
 You can configure this buildpack to wrap the entrypoint process of your app

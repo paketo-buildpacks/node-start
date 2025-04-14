@@ -1,5 +1,5 @@
 # Paketo Buildpack for Node Start
-## `gcr.io/paketo-buildpacks/node-start`
+## `docker.io/paketobuildpacks/node-start`
 
 The Paketo Node Start CNB sets the start command for a given node application.
 The buildpack will detect when a valid javascript file is present within the 

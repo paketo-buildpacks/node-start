@@ -71,6 +71,15 @@ start command that is generated and may not exist yet.
 e.g. If `BP_LAUNCHPOINT=./gen/launchpoint.js` and If `BP_VERIFY_LAUNCHPOINT=false`, the buildpack will not verify that
 the file exists and then set the start command using that file `node gen/launchpoint.js`
 
+## BP_NPM_LAUNCH_REQUIRES_MODULES
+
+The `BP_NPM_LAUNCH_REQUIRES_MODULES` environment configured whether or not the `node_modules` directory is
+required at launch.
+
+This is the case for "bundled" applications, where all dependencies are included in the output folder.
+
+The `node_modules` folder is required by default, this can be disabled with `BP_NPM_LAUNCH_REQUIRES_MODULES=false`.
+
 ## Enabling reloadable process types
 
 You can configure this buildpack to wrap the entrypoint process of your app

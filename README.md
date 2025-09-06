@@ -73,7 +73,7 @@ the file exists and then set the start command using that file `node gen/launchp
 
 ## BP_NPM_LAUNCH_REQUIRES_MODULES
 
-The `BP_NPM_LAUNCH_REQUIRES_MODULES` environment configured whether or not the `node_modules` directory is
+The `BP_NPM_LAUNCH_REQUIRES_MODULES` environment variable configures whether or not the `node_modules` directory is
 required at launch.
 
 This is the case for "bundled" applications, where all dependencies are included in the output folder.

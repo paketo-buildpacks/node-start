@@ -7,5 +7,7 @@
   "ubi-nodejs-extension": "github.com/paketo-buildpacks/ubi-nodejs-extension",
   "node-engine": "github.com/paketo-buildpacks/node-engine",
   "npm-install": "github.com/paketo-buildpacks/npm-install",
-  "watchexec": "github.com/paketo-buildpacks/watchexec"
+  "watchexec": "github.com/paketo-buildpacks/watchexec",
+  "node-run-script": "github.com/paketo-buildpacks/node-run-script",
+  "source-removal": "github.com/paketo-buildpacks/source-removal"
 }

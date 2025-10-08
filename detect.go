@@ -35,7 +35,7 @@ func Detect(reloader Reloader) packit.DetectFunc {
 			if !os.IsNotExist(err) {
 				return packit.DetectResult{}, err
 			}
-		} else {
+		} else if os.Getenv("BP_NODE_LAUNCH_REQUIRES_MODULES") != "false" {
 			requirements = append(requirements, newLaunchRequirement("node_modules"))
 		}
 

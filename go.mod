@@ -8,7 +8,7 @@ require (
 	github.com/paketo-buildpacks/libnodejs v0.4.1
 	github.com/paketo-buildpacks/libreload-packit v0.0.1
 	github.com/paketo-buildpacks/occam v0.31.0
-	github.com/paketo-buildpacks/packit/v2 v2.25.2
+	github.com/paketo-buildpacks/packit/v2 v2.25.3
 	github.com/sclevine/spec v1.4.0
 )
 
@@ -36,7 +36,7 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
-	github.com/google/go-containerregistry v0.20.6 // indirect
+	github.com/google/go-containerregistry v0.20.7 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.3 // indirect
 	github.com/klauspost/compress v1.18.1 // indirect

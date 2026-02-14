@@ -31,6 +31,12 @@ var settings struct {
 		Watchexec struct {
 			Online string
 		}
+		NodeRunScript struct {
+			Online string
+		}
+		SourceRemoval struct {
+			Online string
+		}
 	}
 
 	Extensions struct {
@@ -49,6 +55,8 @@ var settings struct {
 		NPMInstall         string `json:"npm-install"`
 		Watchexec          string `json:"watchexec"`
 		UbiNodejsExtension string `json:"ubi-nodejs-extension"`
+		NodeRunScript      string `json:"node-run-script"`
+		SourceRemoval      string `json:"source-removal"`
 	}
 }
 
@@ -104,10 +112,19 @@ func TestIntegration(t *testing.T) {
 		Execute(settings.Config.Watchexec)
 	Expect(err).ToNot(HaveOccurred())
 
+	settings.Buildpacks.NodeRunScript.Online, err = libpakBuildpackStore.Get.
+		Execute(settings.Config.NodeRunScript)
+	Expect(err).ToNot(HaveOccurred())
+
+	settings.Buildpacks.SourceRemoval.Online, err = libpakBuildpackStore.Get.
+		Execute(settings.Config.SourceRemoval)
+	Expect(err).ToNot(HaveOccurred())
+
 	suite := spec.New("Integration", spec.Report(report.Terminal{}), spec.Parallel())
 	suite("Default", testDefault)
 	suite("Launchpoint", testLaunchpoint)
 	suite("ProjectPath", testProjectPath)
 	suite("WithNodeModules", testNodeModules)
+	suite("BundledModules", testBundledModules)
 	suite.Run(t)
 }

@@ -1,0 +1,90 @@
+package integration_test
+
+import (
+	"fmt"
+	"os"
+	"path/filepath"
+	"testing"
+
+	"github.com/paketo-buildpacks/occam"
+	"github.com/sclevine/spec"
+
+	. "github.com/onsi/gomega"
+	. "github.com/paketo-buildpacks/occam/matchers"
+)
+
+func testBundledModules(t *testing.T, context spec.G, it spec.S) {
+	var (
+		Expect     = NewWithT(t).Expect
+		Eventually = NewWithT(t).Eventually
+
+		pack   occam.Pack
+		docker occam.Docker
+
+		image     occam.Image
+		container occam.Container
+
+		name   string
+		source string
+
+		pullPolicy = "never"
+	)
+
+	it.Before(func() {
+		pack = occam.NewPack().WithVerbose().WithNoColor()
+		docker = occam.NewDocker()
+
+		var err error
+		name, err = occam.RandomName()
+		Expect(err).NotTo(HaveOccurred())
+
+		if settings.Extensions.UbiNodejsExtension.Online != "" {
+			pullPolicy = "always"
+		}
+	})
+
+	it.After(func() {
+		Expect(docker.Container.Remove.Execute(container.ID)).To(Succeed())
+		Expect(docker.Volume.Remove.Execute(occam.CacheVolumeNames(name))).To(Succeed())
+		Expect(docker.Image.Remove.Execute(image.ID)).To(Succeed())
+		Expect(os.RemoveAll(source)).To(Succeed())
+	})
+
+	it("builds and runs successfully", func() {
+		var err error
+		source, err = occam.Source(filepath.Join("testdata", "bundled"))
+		Expect(err).NotTo(HaveOccurred())
+
+		var logs fmt.Stringer
+		image, logs, err = pack.Build.
+			WithPullPolicy(pullPolicy).
+			WithExtensions(
+				settings.Extensions.UbiNodejsExtension.Online,
+			).
+			WithBuildpacks(
+				settings.Buildpacks.NodeEngine.Online,
+				settings.Buildpacks.NPMInstall.Online,
+				settings.Buildpacks.NodeStart.Online,
+				settings.Buildpacks.NodeRunScript.Online,
+				settings.Buildpacks.SourceRemoval.Online,
+			).
+			WithEnv(map[string]string{
+				"BP_NODE_RUN_SCRIPTS":            "build",
+				"BP_VERIFY_LAUNCHPOINT":          "false",
+				"BP_NPM_LAUNCH_REQUIRES_MODULES": "false",
+				"BP_LAUNCHPOINT":                 ".output/server/index.mjs",
+				"BP_INCLUDE_FILES":               ".output/**/*",
+			}).
+			Execute(name, source)
+		Expect(err).ToNot(HaveOccurred(), logs.String)
+
+		container, err = docker.Container.Run.
+			WithEnv(map[string]string{"NITRO_PORT": "8080"}).
+			WithPublish("8080").
+			WithPublishAll().
+			Execute(image.ID)
+		Expect(err).NotTo(HaveOccurred())
+
+		Eventually(container).Should(Serve(ContainSubstring("hello world")))
+	})
+}

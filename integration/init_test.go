@@ -125,6 +125,12 @@ func TestIntegration(t *testing.T) {
 	suite("Launchpoint", testLaunchpoint)
 	suite("ProjectPath", testProjectPath)
 	suite("WithNodeModules", testNodeModules)
-	suite("BundledModules", testBundledModules)
+
+	// nitro results a segfault on UBI images for some reason...
+	if builder.BuilderName != "paketobuildpacks/builder-ubi8-buildpackless-base" &&
+		builder.BuilderName != "paketobuildpacks/ubi-9-builder-buildpackless" &&
+		builder.BuilderName != "paketobuildpacks/ubi-10-builder-buildpackless" {
+		suite("BundledModules", testBundledModules)
+	}
 	suite.Run(t)
 }

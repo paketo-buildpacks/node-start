@@ -64,16 +64,16 @@ func testBundledModules(t *testing.T, context spec.G, it spec.S) {
 			WithBuildpacks(
 				settings.Buildpacks.NodeEngine.Online,
 				settings.Buildpacks.NPMInstall.Online,
-				settings.Buildpacks.NodeStart.Online,
 				settings.Buildpacks.NodeRunScript.Online,
 				settings.Buildpacks.SourceRemoval.Online,
+				settings.Buildpacks.NodeStart.Online,
 			).
 			WithEnv(map[string]string{
-				"BP_NODE_RUN_SCRIPTS":            "build",
-				"BP_VERIFY_LAUNCHPOINT":          "false",
-				"BP_NPM_LAUNCH_REQUIRES_MODULES": "false",
-				"BP_LAUNCHPOINT":                 ".output/server/index.mjs",
-				"BP_INCLUDE_FILES":               ".output/**/*",
+				"BP_NODE_RUN_SCRIPTS":             "build",
+				"BP_VERIFY_LAUNCHPOINT":           "false",
+				"BP_NODE_LAUNCH_REQUIRES_MODULES": "false",
+				"BP_LAUNCHPOINT":                  ".output/server/index.mjs",
+				"BP_INCLUDE_FILES":                ".output/**/*",
 			}).
 			Execute(name, source)
 		Expect(err).ToNot(HaveOccurred(), logs.String)
@@ -81,10 +81,9 @@ func testBundledModules(t *testing.T, context spec.G, it spec.S) {
 		container, err = docker.Container.Run.
 			WithEnv(map[string]string{"NITRO_PORT": "8080"}).
 			WithPublish("8080").
-			WithPublishAll().
 			Execute(image.ID)
 		Expect(err).NotTo(HaveOccurred())
 
-		Eventually(container).Should(Serve(ContainSubstring("hello world")))
+		Eventually(container).Should(Serve(ContainSubstring("hello world")).OnPort(8080))
 	})
 }

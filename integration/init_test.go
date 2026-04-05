@@ -126,10 +126,8 @@ func TestIntegration(t *testing.T) {
 	suite("ProjectPath", testProjectPath)
 	suite("WithNodeModules", testNodeModules)
 
-	// nitro results a segfault on UBI images for some reason...
-	if builder.BuilderName != "paketobuildpacks/builder-ubi8-buildpackless-base" &&
-		builder.BuilderName != "paketobuildpacks/ubi-9-builder-buildpackless" &&
-		builder.BuilderName != "paketobuildpacks/ubi-10-builder-buildpackless" {
+	// nitro results in a a segfault on UBI builders using the extension for some reason...
+	if builder.BuilderName != "paketobuildpacks/builder-ubi8-buildpackless-base" && builder.BuilderName != "paketobuildpacks/ubi-9-builder-buildpackless" {
 		suite("BundledModules", testBundledModules)
 	}
 	suite.Run(t)

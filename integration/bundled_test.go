@@ -58,9 +58,6 @@ func testBundledModules(t *testing.T, context spec.G, it spec.S) {
 		var logs fmt.Stringer
 		image, logs, err = pack.Build.
 			WithPullPolicy(pullPolicy).
-			WithExtensions(
-				settings.Extensions.UbiNodejsExtension.Online,
-			).
 			WithBuildpacks(
 				settings.Buildpacks.NodeEngine.Online,
 				settings.Buildpacks.NPMInstall.Online,

@@ -76,7 +76,8 @@ the file exists and then set the start command using that file `node gen/launchp
 The `BP_NODE_LAUNCH_REQUIRES_MODULES` environment variable configures whether or not the `node_modules` directory is
 required at launch.
 
-This is the case for "bundled" applications, where all dependencies are included in the output folder.
+"Bundled" applications are one example where `node_modules` is not required, as all dependencies are included
+in the output folder.
 
 The `node_modules` folder is required by default, this can be disabled with `BP_NODE_LAUNCH_REQUIRES_MODULES=false`.
 

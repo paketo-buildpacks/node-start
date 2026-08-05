@@ -1,8 +1,9 @@
 # Paketo Buildpack for Node Start
+
 ## `docker.io/paketobuildpacks/node-start`
 
 The Paketo Node Start CNB sets the start command for a given node application.
-The buildpack will detect when a valid javascript file is present within the 
+The buildpack will detect when a valid javascript file is present within the
 application source code directory (see [Application Detection](#application-detection).
 
 ## Integration
@@ -20,6 +21,7 @@ $ ./scripts/package.sh --version <version-number>
 ```
 
 This will create a `build/buildpackage.cnb` file which you can use to build your app as follows:
+
 ```shell
 pack build <app-name> \
   --path <path-to-app> \
@@ -33,8 +35,17 @@ You can add signal handlers in your app to support graceful shutdown and
 program interrupts. This buildpack runs the node server as the init process,
 and thus it ignores any signal with the default action. As a result, the
 process will not terminate on `SIGINT` or `SIGTERM` unless it is coded to do
-so. You can also use docker's `--init` flag to wrap your node process with an
-init system that will properly handle signals.
+so.
+
+To use [tini](https://github.com/krallin/tini) instead, set
+`BP_LAUNCH_WITH_TINI=true` at build time. The tini buildpack must be available
+in the builder order before this buildpack; otherwise detection fails. The
+launch process becomes `tini -g -- node <file>`, where `<file>` is the
+application file discovered by default or set via `BP_LAUNCHPOINT`.
+
+For example, with `BP_LAUNCHPOINT=./src/launchpoint.js` and
+`BP_LAUNCH_WITH_TINI=true`, the launch process is
+`tini -g -- node src/launchpoint.js`.
 
 ## Specifying a project path
 
@@ -47,6 +58,7 @@ This could be useful if your app is a part of a monorepo.
 ## Application Detection
 
 This buildpack searches your application root for the following files:
+
 1. `server.[c|m]js`
 1. `app.[c|m]js`
 1. `main.[c|m]js`
@@ -61,7 +73,11 @@ The `BP_LAUNCHPOINT` environment variable may be used to specify a file for the
 start command that is not included in the above set.
 
 e.g. If `BP_LAUNCHPOINT=./src/launchpoint.js`, the buildpack will verify that
-the file exists and then set the start command using that file `node src/launchpoint.js`
+the file exists and then set the start command using that file `node src/launchpoint.js`.
+
+`BP_LAUNCHPOINT` and `BP_LAUNCH_WITH_TINI` can be used together. `BP_LAUNCHPOINT`
+selects which file to run; `BP_LAUNCH_WITH_TINI` wraps that command with tini
+(for example `tini -g -- node src/launchpoint.js`).
 
 ## BP_VERIFY_LAUNCHPOINT
 
@@ -83,16 +99,18 @@ Set the environment variable `BP_LIVE_RELOAD_ENABLED=true` at build time to enab
 ```shell
 pack build my-app \
   --env BP_LIVE_RELOAD_ENABLED=true
-````
+```
 
 ## Run Tests
 
 To run all unit tests, run:
+
 ```shell
 ./scripts/unit.sh
 ```
 
 To run all integration tests, run:
+
 ```shell
 /scripts/integration.sh
 ```

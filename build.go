@@ -16,12 +16,30 @@ func Build(logger scribe.Emitter, reloader Reloader) packit.BuildFunc {
 			return packit.BuildResult{}, err
 		}
 
-		originalProcess := packit.Process{
-			Type:    "web",
-			Command: "node",
-			Args:    []string{file},
-			Default: true,
-			Direct:  true,
+		var originalProcess packit.Process
+
+		enableTini, err := shouldEnableTini()
+		if err != nil {
+			return packit.BuildResult{}, err
+		}
+
+		if enableTini {
+			originalProcess = packit.Process{
+				Type:    "web",
+				Command: Tini,
+				Args:    []string{"-g", "--", "node", file},
+				Default: true,
+				Direct:  true,
+			}
+			logger.Process("Using tini for process launching")
+		} else {
+			originalProcess = packit.Process{
+				Type:    "web",
+				Command: "node",
+				Args:    []string{file},
+				Default: true,
+				Direct:  true,
+			}
 		}
 
 		var processes []packit.Process

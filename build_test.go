@@ -145,6 +145,66 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		})
 	})
 
+	context("when BP_LAUNCH_WITH_TINI is true", func() {
+		it.Before(func() {
+			t.Setenv("BP_LAUNCH_WITH_TINI", "true")
+		})
+
+		it("uses tini to launch the node process", func() {
+			result, err := build(buildContext)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(result.Launch.Processes).To(Equal([]packit.Process{
+				{
+					Type:    "web",
+					Command: "tini",
+					Args:    []string{"-g", "--", "node", "server.js"},
+					Default: true,
+					Direct:  true,
+				},
+			}))
+
+			Expect(buffer.String()).To(ContainSubstring("Using tini for process launching"))
+			Expect(buffer.String()).To(ContainSubstring("Assigning launch processes"))
+		})
+
+		context("when BP_LAUNCHPOINT is set", func() {
+			it.Before(func() {
+				Expect(os.MkdirAll(filepath.Join(workingDir, "src"), os.ModePerm)).To(Succeed())
+				Expect(os.WriteFile(filepath.Join(workingDir, "src", "launchpoint.js"), nil, 0600)).To(Succeed())
+				t.Setenv("BP_LAUNCHPOINT", "./src/launchpoint.js")
+			})
+
+			it("uses tini to launch the launchpoint file", func() {
+				result, err := build(buildContext)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(result.Launch.Processes).To(Equal([]packit.Process{
+					{
+						Type:    "web",
+						Command: "tini",
+						Args:    []string{"-g", "--", "node", "src/launchpoint.js"},
+						Default: true,
+						Direct:  true,
+					},
+				}))
+
+				Expect(buffer.String()).To(ContainSubstring("Using tini for process launching"))
+			})
+		})
+	})
+
+	context("when BP_LAUNCH_WITH_TINI is malformed", func() {
+		it.Before(func() {
+			t.Setenv("BP_LAUNCH_WITH_TINI", "not-a-bool")
+		})
+
+		it("returns an error", func() {
+			_, err := build(buildContext)
+			Expect(err).To(MatchError(ContainSubstring("failed to parse BP_LAUNCH_WITH_TINI value not-a-bool")))
+		})
+	})
+
 	context("when live reload is enabled", func() {
 		it.Before(func() {
 			reloader.ShouldEnableLiveReloadCall.Returns.Bool = true
@@ -187,6 +247,38 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 			Expect(buffer.String()).To(ContainSubstring("Some Buildpack some-version"))
 			Expect(buffer.String()).To(ContainSubstring("Assigning launch processes"))
+		})
+
+		context("when BP_LAUNCH_WITH_TINI is also true", func() {
+			it.Before(func() {
+				t.Setenv("BP_LAUNCH_WITH_TINI", "true")
+			})
+
+			it("wraps the tini process with watchexec", func() {
+				result, err := build(buildContext)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(result.Launch.Processes).To(Equal([]packit.Process{
+					{
+						Type:    "web",
+						Command: "Reloadable-Command",
+					},
+					{
+						Type:    "no-reload",
+						Command: "Nonreloadable-Command",
+					},
+				}))
+
+				Expect(reloader.TransformReloadableProcessesCall.Receives.OriginalProcess).To(Equal(packit.Process{
+					Type:    "web",
+					Command: "tini",
+					Args:    []string{"-g", "--", "node", "server.js"},
+					Default: true,
+					Direct:  true,
+				}))
+
+				Expect(buffer.String()).To(ContainSubstring("Using tini for process launching"))
+			})
 		})
 	})
 

@@ -84,6 +84,46 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 				}))
 			})
 		})
+
+		context("when BP_LAUNCH_WITH_TINI is true", func() {
+			it.Before(func() {
+				t.Setenv("BP_LAUNCH_WITH_TINI", "true")
+			})
+
+			it("requires tini at launch time", func() {
+				result, err := detect(packit.DetectContext{
+					WorkingDir: workingDir,
+				})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(result.Plan.Requires).To(Equal([]packit.BuildPlanRequirement{
+					{
+						Name: "node",
+						Metadata: map[string]interface{}{
+							"launch": true,
+						},
+					},
+					{
+						Name: "tini",
+						Metadata: map[string]interface{}{
+							"launch": true,
+						},
+					},
+				}))
+			})
+		})
+
+		context("when BP_LAUNCH_WITH_TINI is malformed", func() {
+			it.Before(func() {
+				t.Setenv("BP_LAUNCH_WITH_TINI", "not-a-bool")
+			})
+
+			it("returns an error", func() {
+				_, err := detect(packit.DetectContext{
+					WorkingDir: workingDir,
+				})
+				Expect(err).To(MatchError(ContainSubstring("failed to parse BP_LAUNCH_WITH_TINI value not-a-bool")))
+			})
+		})
 	}, spec.Sequential())
 
 	context("sniff test of when an application is detected in the working dir and does not have a js extension", func() {

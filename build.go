@@ -18,7 +18,7 @@ func Build(logger scribe.Emitter, reloader Reloader) packit.BuildFunc {
 
 		var originalProcess packit.Process
 
-		enableTini, err := shouldEnableTini()
+		enableTini, err := libnodejs.ShouldLaunchWithTini()
 		if err != nil {
 			return packit.BuildResult{}, err
 		}

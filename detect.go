@@ -1,9 +1,7 @@
 package nodestart
 
 import (
-	"fmt"
 	"os"
-	"strconv"
 
 	"github.com/paketo-buildpacks/libnodejs"
 	"github.com/paketo-buildpacks/libreload-packit"
@@ -47,9 +45,9 @@ func Detect(reloader Reloader) packit.DetectFunc {
 			requirements = append(requirements, newLaunchRequirement("watchexec"))
 		}
 
-		if shouldEnableTini, err := shouldEnableTini(); err != nil {
+		if shouldLaunchWithTini, err := libnodejs.ShouldLaunchWithTini(); err != nil {
 			return packit.DetectResult{}, err
-		} else if shouldEnableTini {
+		} else if shouldLaunchWithTini {
 			requirements = append(requirements, newLaunchRequirement(Tini))
 		}
 
@@ -68,15 +66,4 @@ func newLaunchRequirement(name string) packit.BuildPlanRequirement {
 			"launch": true,
 		},
 	}
-}
-
-func shouldEnableTini() (bool, error) {
-	if value, found := os.LookupEnv(EnableTiniEnvVar); found {
-		enable, err := strconv.ParseBool(value)
-		if err != nil {
-			return false, fmt.Errorf("failed to parse %s value %s: %w", EnableTiniEnvVar, value, err)
-		}
-		return enable, nil
-	}
-	return false, nil
 }
